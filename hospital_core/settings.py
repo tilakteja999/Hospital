@@ -75,6 +75,10 @@ WSGI_APPLICATION = 'hospital_core.wsgi.application'
 USE_MYSQL = os.getenv('USE_MYSQL', 'False').lower() in ('true', '1', 'yes')
 
 if USE_MYSQL:
+    import pymysql
+
+    pymysql.install_as_MySQLdb()
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
