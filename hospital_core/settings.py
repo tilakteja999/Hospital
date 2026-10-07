@@ -6,6 +6,8 @@ Government of India Hospital Management & Health Portal.
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -18,12 +20,20 @@ except Exception:
 MAPS_PROVIDER = os.getenv('MAPS_PROVIDER', 'leaflet')
 MAPS_API_KEY = os.getenv('MAPS_API_KEY', '')
 
-# Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-india-gov-hospital-health-portal-secret-key-2026')
+DEBUG = os.getenv('DJANGO_DEBUG', 'False' if os.getenv('VERCEL') else 'True').lower() in ('true', '1', 'yes')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('Set DJANGO_SECRET_KEY in the deployment environment.')
+    SECRET_KEY = 'django-insecure-local-development-key'
 
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host.strip()]
+if os.getenv('VERCEL'):
+    ALLOWED_HOSTS.append('.vercel.app')
+    if os.getenv('VERCEL_URL'):
+        ALLOWED_HOSTS.append(os.environ['VERCEL_URL'])
+elif not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -71,10 +81,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'hospital_core.wsgi.application'
 
 # Database Configuration
-# Default to SQLite with easy environment/config toggle for MySQL
 USE_MYSQL = os.getenv('USE_MYSQL', 'False').lower() in ('true', '1', 'yes')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-if USE_MYSQL:
+if DATABASE_URL:
+    import dj_database_url
+
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=bool(os.getenv('VERCEL')),
+        )
+    }
+    if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+        import pymysql
+
+        pymysql.install_as_MySQLdb()
+elif USE_MYSQL:
     import pymysql
 
     pymysql.install_as_MySQLdb()
@@ -93,6 +118,8 @@ if USE_MYSQL:
             }
         }
     }
+elif os.getenv('VERCEL'):
+    raise ImproperlyConfigured('Set DATABASE_URL or USE_MYSQL and DB_* variables; SQLite is not writable on Vercel.')
 else:
     DATABASES = {
         'default': {
@@ -134,3 +161,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
+
+if os.getenv('VERCEL'):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = not DEBUG
+    CSRF_COOKIE_SECURE = not DEBUG
