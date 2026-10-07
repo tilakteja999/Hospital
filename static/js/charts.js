@@ -12,9 +12,12 @@ const VitalsChartEngine = {
 
   fetchAndRenderAll() {
     fetch('/api/vitals/')
-      .then(res => res.json())
+      .then(res => {
+        if (res.redirected || !res.ok) return null;
+        return res.json();
+      })
       .then(data => {
-        if (data.success && data.history) {
+        if (data && data.success && data.history) {
           this.renderCharts(data.history);
           this.updateMetricCards(data.latest);
         }

@@ -886,7 +886,8 @@ class VoiceDialogueEngine:
             if any(kw in q_lower or kw in q for kw in kw_list):
                 if any(verb in q_lower or verb in q for verb in [
                     'change', 'switch', 'set', 'convert', 'to', 'marchu', 'badlo', 'badal',
-                    'cheppu', 'bolo', 'solunga', 'helu', 'parayu', 'sang', 'bolun',
+                    'cheppu', 'చెప్పండి', 'bolo', 'बोलो', 'solunga', 'சொல்லுங்கள்', 'helu', 'ಹೇಳಿ',
+                    'parayu', 'പറയൂ', 'sang', 'सांगा', 'bolun', 'বলুন',
                     'speak', 'explain', 'tell', 'language', 'website', 'bhasha', 'in', 'lo', 'mein'
                 ]):
                     target_switch_lang = l_code

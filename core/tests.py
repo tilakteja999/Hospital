@@ -53,7 +53,7 @@ class HospitalPlatformTests(TestCase):
         self.assertContains(response, 'Hospital Government of India')
         self.assertContains(response, 'Patient Portal')
         self.assertContains(response, 'Doctor Portal')
-        self.assertContains(response, 'Admin Portal')
+        self.assertContains(response, 'Government Admin')
 
     def test_patient_login(self):
         response = self.client.post(reverse('patient_login'), {

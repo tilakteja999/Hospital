@@ -4,6 +4,9 @@ Government of India Hospital Management & Health Portal.
 """
 
 import os
+import secrets
+import shutil
+import tempfile
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -21,11 +24,15 @@ MAPS_PROVIDER = os.getenv('MAPS_PROVIDER', 'leaflet')
 MAPS_API_KEY = os.getenv('MAPS_API_KEY', '')
 
 DEBUG = os.getenv('DJANGO_DEBUG', 'False' if os.getenv('VERCEL') else 'True').lower() in ('true', '1', 'yes')
+IS_VERCEL = bool(os.getenv('VERCEL'))
+DATABASE_URL = os.getenv('DATABASE_URL')
+USE_MYSQL = os.getenv('USE_MYSQL', 'False').lower() in ('true', '1', 'yes')
+EPHEMERAL_DEMO_MODE = IS_VERCEL and not DATABASE_URL and not USE_MYSQL
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 if not SECRET_KEY:
-    if not DEBUG:
+    if not DEBUG and not EPHEMERAL_DEMO_MODE:
         raise ImproperlyConfigured('Set DJANGO_SECRET_KEY in the deployment environment.')
-    SECRET_KEY = 'django-insecure-local-development-key'
+    SECRET_KEY = secrets.token_urlsafe(50) if EPHEMERAL_DEMO_MODE else 'django-insecure-local-development-key'
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host.strip()]
 if os.getenv('VERCEL'):
@@ -81,9 +88,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'hospital_core.wsgi.application'
 
 # Database Configuration
-USE_MYSQL = os.getenv('USE_MYSQL', 'False').lower() in ('true', '1', 'yes')
-DATABASE_URL = os.getenv('DATABASE_URL')
-
 if DATABASE_URL:
     import dj_database_url
 
@@ -118,8 +122,24 @@ elif USE_MYSQL:
             }
         }
     }
-elif os.getenv('VERCEL'):
-    raise ImproperlyConfigured('Set DATABASE_URL or USE_MYSQL and DB_* variables; SQLite is not writable on Vercel.')
+elif IS_VERCEL:
+    source_database = BASE_DIR / 'db.sqlite3'
+    database_path = Path(tempfile.gettempdir()) / 'hospital-demo.sqlite3'
+    if not source_database.is_file():
+        raise ImproperlyConfigured('The demo SQLite database is missing from the deployment bundle.')
+    if not database_path.exists():
+        temporary_database = database_path.with_name(f'{database_path.name}.{os.getpid()}.tmp')
+        try:
+            shutil.copyfile(source_database, temporary_database)
+            os.replace(temporary_database, database_path)
+        finally:
+            temporary_database.unlink(missing_ok=True)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': database_path,
+        }
+    }
 else:
     DATABASES = {
         'default': {
@@ -162,7 +182,7 @@ LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
-if os.getenv('VERCEL'):
+if IS_VERCEL:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = not DEBUG
     CSRF_COOKIE_SECURE = not DEBUG
