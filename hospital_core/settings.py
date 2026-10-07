@@ -183,6 +183,8 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
 if IS_VERCEL:
+    if EPHEMERAL_DEMO_MODE:
+        SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = not DEBUG
     CSRF_COOKIE_SECURE = not DEBUG
