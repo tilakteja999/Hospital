@@ -1,0 +1,165 @@
+Role:-Think ur self as a senior developer.Give me code to build a website.
+Requriements:-
+1)Need to create a web appilication using the web technologies[html,css,javascript],backend[python,jango] and data frame [my sql]
+2)Need to create an appilication which shows the implementation of the basic crud opertions.
+3)In home page:
+display options:
+-patient
+-Doctor
+-Admin
+4)When pressed/clicked the  patient icon:
+it should open a login page of:
+-phone no
+-Password
+-Login
+-forgot password
+-Create an account
+-Contnue with google
+-->When pressed/clicked the  Doctor icon:
+it should open a login page of:
+-phone no
+-Password
+-Login
+-forgot password
+-->When pressed/clicked the Admin icon:
+it should open a login page of:
+-phone no
+-Password
+-Login
+-forgot password
+5)After logining into the platform:
+it should open a Home page  with 2 Horizontal bars:
+-->Bar1:
+in the left Coner:-A Logo of the India Hospital Government And a font printing Hospital Governement of india.
+in the right Coner:A profile icon along with the name
+-->Bar2:
+-Home
+-Records
+-Bookings
+-Notifications
+-Settings
+-About Us
+-prescription
+
+6)When the home icon is pressed/clecked the home icon:
+There should some boxes plotting in that boxes the following template names should be added along with recent reports data of those templates present in the report :
+-bp
+-o2
+-sugar percentage
+-weight
+-blood percentage
+-heartrate
+7)When we click/press the records icon we have to get the recent updated or all the visited hospital records of the that person of all time.
+--Here when we press a particular record we should all report that we got or happened to that person in the              hospital.According to these recording if there are any new data about the bp,o2,sugar,weight,blood,heartrate the display the new reports in home page templates place.
+8)When we click/press the booking icon we have get box which consists:
+-location(Here the location can be typed or it should be automatically detect according to mobile location.If typed then a list will be avaliable according to letter entering)
+-Area(we get the popular areas present in that particular location).
+-hospital name(we multiple hospital present in that location and we choose one not typing)
+-date
+-doctor
+-check/book(After clicking/pressing the book.check icon we have to get a pop box as booking acccepted and below that we have to get date,time exact according to appilication,if the slots are free on that day.Else we get Booking denied in a popup box. 
+9)When we press/click the Notifications:
+We get notifications health checkup remainder and all things regarding the health care.
+10)When we press AboutUs:
+we get the total information about the app(showing which icon is for which purpose) and  the  hospitals.
+11)When the prescription is clicked:
+we get the data about the tablets that are assigented to us.For the particular time.
+12)When settings is pressed/click:
+This is same as all the apps of hospitals,governments and all
+13)When the top right profile icon is click we get the profile details and all the things.
+Questions:-
+Does this prompt or something above solves the real world problem and real time problems.
+Which are solving acutal present people problem.The main theme here is solving the different type of users problems and all.
+
+
+
+
+
+prompt2
+
+================================================================================
+PROMPT 2 — SWASTHYA SETU: COMPLETE MASTER PROJECT PROMPT (WITH HOSPITAL & GOVT ADMIN PORTALS)
+================================================================================
+
+PROJECT TITLE: Swasthya Setu — Unified National Healthcare & Smart Hospital Management System
+
+ROLE & PERSONA:
+Act as a Senior Lead Architect & Full-Stack Systems Engineer. Design and build a production-grade, highly accessible web application with 4 distinct roles (Patient, Doctor, Hospital Admin, Government Admin), complete with role-based access control, appointment scheduling, hospital telemetry, resource monitoring, and cross-hospital public health analytics.
+
+--------------------------------------------------------------------------------
+1. TECH STACK REQUIREMENTS
+--------------------------------------------------------------------------------
+- Frontend Framework : HTML5, Vanilla CSS3 (Custom Design System, Glassmorphism, Color-coded Badges, Responsive Grid/Flexbox), JavaScript (ES6+, Chart.js, Web Speech API, i18n Translation Engine).
+- Backend Framework  : Python with Django Web Framework (MVC/MVT pattern, ORM models, RESTful JSON APIs, Session & Token Security).
+- Database Engine    : MySQL / SQLite Relational Database with strict relational integrity and indexed search.
+- Security & Auth    : Role-Based Access Control (RBAC), Mobile Number / Email + Password, Google OAuth2, Aadhaar OTP verification, Audit Logging.
+
+--------------------------------------------------------------------------------
+2. UPDATED 4-TIER ROLE HIERARCHY & AUTHENTICATION PORTALS
+--------------------------------------------------------------------------------
+The home gateway (/) presents 4 prominent access cards:
+
+A) Patient Portal (Citizen Access)
+   - Login: Mobile Number / Email + Password / Google OAuth2 / ABHA ID
+   - Features: View personal medical records, real-time vitals telemetry (BP, SpO2, Sugar, Weight, Blood %, Heart Rate), doctor slot booking, digital prescriptions, preventive health notifications, voice AI companion.
+
+B) Doctor Portal (Clinical Workspace)
+   - Login: Doctor Registration ID / Phone + Password
+   - Features: Today's OPD queue, clinical EHR entry, lab test ordering, discharge summary creation, digital prescription writer, personal slot & duty availability.
+
+C) Hospital Admin Portal (Facility Operations & Telemetry)
+   - Login: Hospital Admin ID / Registered Phone + Password
+   - Features: Manage hospital doctors, departments, OPD slots, live OPD queue, bed & resource matrix (General, ICU, Ventilator, Oxygen beds), appointment status actions, CSV/PDF report downloads.
+
+D) Government Admin Portal (National & State Healthcare Authority)
+   - Login: Government Officer ID / Phone + Password
+   - Features: Hospital directory management, doctor credential verification/approval workflow, multi-hospital cross-filtering analytics (Chart.js), state/district epidemic surveillance, audit trail monitoring, public advisories.
+
+--------------------------------------------------------------------------------
+3. HOSPITAL ADMIN PORTAL SPECIFICATIONS
+--------------------------------------------------------------------------------
+- Dashboard Header: Hospital name, logo, location badge, verified facility status, quick action buttons.
+- Summary Counters: Today's total bookings, completed, pending, cancelled, no-show, emergency count, active doctors, ICU occupancy %.
+- Comparison Metrics: Today vs Yesterday, This Week vs Last Week, This Month vs Last Month trends.
+- Appointment Management Engine:
+  - Filters: Date (today, yesterday, week, month, year, custom date), status (booked, checked-in, waiting, in-consultation, completed, cancelled, no-show, rescheduled), doctor, department, patient name / ABHA search.
+  - Actions: Confirm, Mark Completed, Cancel with reason, Reschedule date/slot, Mark No-Show.
+- Doctor Roster Management: Add new doctors (default 'Pending Verification'), set OPD hours, fees, slot duration, max daily limit, emergency leave flags.
+- Department & Slot Management: Department creation, doctor assignment, live OPD token queue.
+- Bed & Resource Matrix: Edit General, ICU, Ventilator, Oxygen beds total & occupied counts, oxygen pressure status, automated warning alerts for ICU >85% capacity.
+- Reports & Export: One-click CSV/PDF export for Daily OPD, Doctor performance, Department load, and Resource utilization.
+
+--------------------------------------------------------------------------------
+4. GOVERNMENT ADMIN & MULTI-HOSPITAL ANALYTICS SPECIFICATIONS
+--------------------------------------------------------------------------------
+- Hospital Directory Management: View, register, edit, and suspend/activate hospital facilities nationwide.
+- Doctor Verification Workflow: View doctors registered by hospital admins, inspect credentials, and Approve (VERIFIED) or Reject.
+- Multi-Hospital Cross-Filtering Dashboard: Filter total appointments across single or multiple hospitals, state, district, specialty, doctor, date range, and status.
+- Visual Analytics (Chart.js):
+  1. Master appointment load trend lines
+  2. Hospital comparison bar charts
+  3. Specialty distribution doughnut charts
+  4. Pending risk & doctor workload distribution charts
+- Audit Trail: Immutable logging of all sensitive actions (edits, verifications, resource updates, security checks).
+
+--------------------------------------------------------------------------------
+5. DATABASE SCHEMAS (DJANGO MODELS)
+--------------------------------------------------------------------------------
+- User (phone, role ['PATIENT', 'DOCTOR', 'HOSPITAL', 'ADMIN'], full_name, aadhaar_number, abha_id, gender, age, blood_group, city, state)
+- HospitalFacility / Hospital (name, facility_type, address, city, district, state, pincode, contact_phone, email, license_number, status ['ACTIVE', 'PENDING_VERIFICATION', 'SUSPENDED', 'INACTIVE'])
+- HospitalAdmin (user, hospital, designation, phone, is_active)
+- Department (hospital, name, description, is_active)
+- DoctorProfile / Doctor (hospital, user, doctor_reg_id, name, phone, email, qualification, specialization, department, consultation_fee, verification_status ['VERIFIED', 'PENDING_VERIFICATION', 'REJECTED'], available_days, opd_start_time, opd_end_time, appointment_duration, max_daily_slots, leave_status, status)
+- AppointmentBooking / Appointment (patient, doctor, hospital, appointment_date, time_slot, token_number, opd_token_number, status ['BOOKED', 'CHECKED_IN', 'WAITING', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED'], is_emergency, cancellation_reason, rescheduled_from, booking_reference)
+- HospitalResource (hospital, general_beds_total, general_beds_occupied, icu_beds_total, icu_beds_occupied, ventilator_beds_total, ventilator_beds_occupied, oxygen_beds_total, oxygen_beds_occupied, oxygen_supply_status)
+- AuditLog (user, user_display, role, action, resource_type, resource_id, status, details, timestamp)
+
+--------------------------------------------------------------------------------
+6. RBAC CONTROL RULES & AUDIT TRAIL
+--------------------------------------------------------------------------------
+- Patient: Read/Write own medical records and book/cancel own appointments.
+- Doctor: Manage assigned OPD queue, record patient diagnosis, issue digital prescriptions.
+- Hospital Admin: Manage assigned hospital doctors, slots, queue, beds, resources, and reports. Blocked from viewing other hospitals or altering clinical doctor notes.
+- Government Admin: Full cross-hospital visibility, hospital verification, doctor verification, national analytics, audit logs.
+================================================================================
+

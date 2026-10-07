@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Login | Hospital Government of India{% endblock %}
+
+{% block content %}
+<div style="max-width: 460px; margin: 30px auto;">
+  <div class="vital-card" style="padding: 32px; border-top: 4px solid var(--primary-navy);">
+    
+    <div style="text-align:center; margin-bottom: 24px;">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(11, 37, 69, 0.12); color: var(--primary-navy); display:inline-flex; align-items:center; justify-content:center; font-size: 1.6rem; margin-bottom: 10px;">
+        🏛️
+      </div>
+      <h2 style="color: var(--primary-navy); font-weight: 700; font-size: 1.4rem;">Hospital Admin Portal</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Health Authority & Civil Hospital Administrative Officers</p>
+    </div>
+
+    <form method="POST" action="{% url 'admin_login' %}">
+      {% csrf_token %}
+
+      <!-- Phone Number -->
+      <div class="form-group">
+        <label class="form-label" for="phone">
+          <span>Admin Phone / Officer ID</span>
+        </label>
+        <div style="display:flex; align-items:center; position:relative;">
+          <span style="position:absolute; left: 12px; font-weight: 600; color: var(--text-muted); font-size: 0.9rem;">+91</span>
+          <input type="text" name="phone" id="phone" class="form-control" style="padding-left: 50px;" placeholder="9998887770" value="9998887770" required>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <div class="form-label">
+          <label for="password">Security Password</label>
+          <a href="{% url 'forgot_password' %}" style="font-size: 0.82rem; color: var(--primary-navy); text-decoration: none; font-weight: 600;">
+            Forgot Password?
+          </a>
+        </div>
+        <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" value="admin123" required>
+      </div>
+
+      <!-- Login Button -->
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 6px; font-size: 1rem;">
+        Login to Admin Dashboard
+      </button>
+
+      <div style="background: #eef4f8; padding: 12px; border-radius: var(--radius-sm); text-align: center; margin-top: 20px;">
+        <span style="font-size: 0.8rem; color: var(--primary-navy); font-weight: 600;">Admin Demo Credentials:</span>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Phone: <strong>9998887770</strong> | Password: <strong>admin123</strong></div>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 0.88rem;">
+        <a href="{% url 'role_portal' %}" style="color: var(--text-muted); text-decoration: none;">
+          ← Switch Role
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

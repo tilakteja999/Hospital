@@ -1,0 +1,7 @@
+.env
+db.sqlite3
+media/radiology_studies/
+__pycache__/
+*.py[cod]
+.venv/
+venv/

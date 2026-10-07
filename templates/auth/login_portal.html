@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Portal Selection | Hospital Government of India{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 40px auto; text-align: center;">
+  
+  <div style="margin-bottom: 36px;">
+    <img src="/static/images/emblem.svg" alt="Emblem" style="width: 76px; height: 76px; margin-bottom: 14px;">
+    <h2 style="font-size: 2rem; color: var(--primary-navy); font-weight: 800; letter-spacing: -0.5px;" data-i18n="brand_title">
+      Hospital Government of India
+    </h2>
+    <p style="color: var(--text-muted); font-size: 1.05rem; max-width: 600px; margin: 8px auto 0;" data-i18n="brand_sub">
+      National Unified Healthcare & Hospital Telemetry Portal. Please select your role to proceed.
+    </p>
+  </div>
+
+  <!-- 3 Role Selector Options -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; text-align: left;">
+    
+    <!-- Role 1: Patient -->
+    <a href="{% url 'patient_login' %}" style="text-decoration:none; color:inherit;">
+      <div class="vital-card" style="border-top: 4px solid var(--accent-saffron); cursor: pointer; height: 100%; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(255, 153, 51, 0.15); color: #ff9933; display:flex; align-items:center; justify-content:center; font-size: 1.8rem; margin-bottom: 16px;">
+            👤
+          </div>
+          <h3 style="font-size: 1.3rem; color: var(--primary-navy); font-weight: 700; margin-bottom: 6px;" data-i18n="role_patient">
+            Patient Portal
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.4;">
+            Access personal medical records, live vitals telemetry (BP, SpO2, Sugar), doctor bookings, and active prescriptions.
+          </p>
+        </div>
+        <div style="margin-top: 20px; font-weight: 700; color: var(--accent-saffron); display:flex; align-items:center; gap: 6px;">
+          <span data-i18n="role_patient">Patient</span> Login / Register →
+        </div>
+      </div>
+    </a>
+
+    <!-- Role 2: Doctor -->
+    <a href="{% url 'doctor_login' %}" style="text-decoration:none; color:inherit;">
+      <div class="vital-card" style="border-top: 4px solid var(--accent-emerald); cursor: pointer; height: 100%; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(0, 168, 107, 0.15); color: #00a86b; display:flex; align-items:center; justify-content:center; font-size: 1.8rem; margin-bottom: 16px;">
+            👨‍⚕️
+          </div>
+          <h3 style="font-size: 1.3rem; color: var(--primary-navy); font-weight: 700; margin-bottom: 6px;" data-i18n="role_doctor">
+            Doctor Portal
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.4;">
+            Review daily OPD appointments, patient history, diagnostic reports, and issue digital prescriptions.
+          </p>
+        </div>
+        <div style="margin-top: 20px; font-weight: 700; color: var(--accent-emerald); display:flex; align-items:center; gap: 6px;">
+          <span data-i18n="role_doctor">Doctor</span> Login →
+        </div>
+      </div>
+    </a>
+
+    <!-- Role 3: Hospital Admin -->
+    <a href="{% url 'hospital_login' %}" style="text-decoration:none; color:inherit;">
+      <div class="vital-card" style="border-top: 4px solid #0284c7; cursor: pointer; height: 100%; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(2, 132, 199, 0.15); color: #0284c7; display:flex; align-items:center; justify-content:center; font-size: 1.8rem; margin-bottom: 16px;">
+            🏥
+          </div>
+          <h3 style="font-size: 1.3rem; color: var(--primary-navy); font-weight: 700; margin-bottom: 6px;" data-i18n="role_hospital">
+            Hospital Portal
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.4;">
+            Manage hospital doctors, departments, OPD slots, live queue, bed availability, resources, and reports.
+          </p>
+        </div>
+        <div style="margin-top: 20px; font-weight: 700; color: #0284c7; display:flex; align-items:center; gap: 6px;">
+          <span>Hospital Admin</span> Login →
+        </div>
+      </div>
+    </a>
+
+    <!-- Role 4: Government Admin -->
+    <a href="{% url 'admin_login' %}" style="text-decoration:none; color:inherit;">
+      <div class="vital-card" style="border-top: 4px solid var(--primary-navy); cursor: pointer; height: 100%; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(11, 37, 69, 0.12); color: var(--primary-navy); display:flex; align-items:center; justify-content:center; font-size: 1.8rem; margin-bottom: 16px;">
+            🏛️
+          </div>
+          <h3 style="font-size: 1.3rem; color: var(--primary-navy); font-weight: 700; margin-bottom: 6px;" data-i18n="role_admin">
+            Government Admin
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.4;">
+            Verify hospitals and doctor credentials, monitor state/national analytics, audit logs, and public advisories.
+          </p>
+        </div>
+        <div style="margin-top: 20px; font-weight: 700; color: var(--primary-navy); display:flex; align-items:center; gap: 6px;">
+          <span data-i18n="role_admin">Government Officer</span> Login →
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Government Assurance Badge -->
+  <div style="margin-top: 48px; padding: 18px 24px; background: #ffffff; border-radius: var(--radius-md); border: 1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap: 14px;">
+    <div style="display:flex; align-items:center; gap: 12px; text-align:left;">
+      <span style="font-size: 1.6rem;">🔒</span>
+      <div>
+        <div style="font-weight:700; color:var(--primary-navy); font-size: 0.95rem;">Ayushman Bharat Digital Mission (ABDM) Compliant</div>
+        <div style="font-size: 0.8rem; color:var(--text-muted);">Secured with Aadhaar OTP Identity Verification and End-to-End Health Data Encryption</div>
+      </div>
+    </div>
+    <div style="display:flex; gap: 10px;">
+      <span class="brand-badge">24x7 Helpline: 1075</span>
+      <span class="brand-badge">Emergency: 108</span>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

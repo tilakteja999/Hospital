@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-container" style="max-width: 850px; margin: 30px auto; padding: 0 15px;">
+  <div style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 8px 30px rgba(0,0,0,0.08); overflow: hidden;">
+    
+    <!-- Official Verification Banner -->
+    <div style="background: linear-gradient(135deg, #0b3b60 0%, #174d75 100%); color: #fff; padding: 24px; text-align: center;">
+      <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:8px;">
+        <span style="font-size:2rem;">🛡️</span>
+        <h2 style="margin:0; font-size:1.4rem; letter-spacing:0.5px;">NATIONAL DIGITAL HEALTH REGISTRY</h2>
+      </div>
+      <p style="margin:0; font-size:0.9rem; opacity:0.9;">Digital Discharge Summary Verification Portal • Govt of India (Demo Prototype)</p>
+    </div>
+
+    <div style="padding: 28px;">
+      {% if is_verified %}
+      <div style="display:flex; align-items:center; gap:12px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:14px 18px; margin-bottom:24px;">
+        <span style="font-size:1.8rem; color:#2e7d32;">✓</span>
+        <div>
+          <strong style="color:#2e7d32; font-size:1.05rem;">OFFICIALLY VERIFIED DISCHARGE RECORD</strong>
+          <p style="margin:2px 0 0 0; font-size:0.85rem; color:#1b5e20;">
+            Verification Code: <strong>{{ summary.verification_code }}</strong> • Reference: <strong>{{ summary.summary_reference }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Summary Sheet -->
+      <div style="border: 2px solid #0b3b60; border-radius: 8px; padding: 24px; background: #fafafa;">
+        <div style="display:flex; justify-content:space-between; border-bottom:2px solid #cbd5e1; padding-bottom:12px; margin-bottom:16px;">
+          <div>
+            <h3 style="margin:0; color:#0b3b60; font-size:1.25rem;">{{ summary.hospital_name }}</h3>
+            <div style="font-size:0.9rem; color:#475569;">Department: {{ summary.department }}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.85rem; color:#64748b;">Issued on: {{ summary.discharge_date|date:"d-M-Y" }}</div>
+            <div style="font-size:0.85rem; font-weight:700; color:#0b3b60;">{{ summary.summary_reference }}</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px; font-size:0.9rem;">
+          <div>
+            <span style="color:#64748b;">Patient Name:</span><br>
+            <strong>{{ summary.patient.get_display_name }}</strong> (Age: {{ summary.patient.age|default:"N/A" }}, {{ summary.patient.gender|default:"Male" }})
+          </div>
+          <div>
+            <span style="color:#64748b;">Attending Doctor:</span><br>
+            <strong>{{ summary.doctor_name }}</strong> (Reg: {{ summary.doctor_reg_no }})
+          </div>
+          <div>
+            <span style="color:#64748b;">Admission Date:</span><br>
+            <strong>{{ summary.admission_date|date:"d-M-Y" }}</strong>
+          </div>
+          <div>
+            <span style="color:#64748b;">Discharge Date:</span><br>
+            <strong>{{ summary.discharge_date|date:"d-M-Y" }}</strong>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px; font-size:0.9rem;">
+          <strong style="color:#0f172a;">Primary Clinical Diagnosis:</strong>
+          <p style="margin:4px 0 0 0; color:#334155;">{{ summary.diagnosis }}</p>
+        </div>
+
+        <div style="margin-bottom:14px; font-size:0.9rem;">
+          <strong style="color:#0f172a;">Treatment & Procedures Administered:</strong>
+          <p style="margin:4px 0 0 0; color:#334155;">{{ summary.procedures_treatment }}</p>
+        </div>
+
+        <div style="margin-bottom:14px; font-size:0.9rem;">
+          <strong style="color:#0f172a;">Condition at Discharge:</strong>
+          <p style="margin:4px 0 0 0; color:#00a86b; font-weight:600;">{{ summary.condition_at_discharge }}</p>
+        </div>
+
+        <div style="margin-bottom:14px; font-size:0.9rem;">
+          <strong style="color:#0f172a;">Discharge Medications:</strong>
+          <p style="margin:4px 0 0 0; color:#334155; background:#fff; padding:8px 12px; border:1px solid #e2e8f0; border-radius:4px;">{{ summary.discharge_medicines }}</p>
+        </div>
+
+        <div style="margin-bottom:14px; font-size:0.9rem;">
+          <strong style="color:#0f172a;">Follow-up Instructions:</strong>
+          <p style="margin:4px 0 0 0; color:#334155;">{{ summary.follow_up_instructions }}</p>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; border-top:1px dashed #cbd5e1; padding-top:14px; margin-top:20px;">
+          <div style="font-size:0.75rem; color:#64748b;">
+            Verification Hash: {{ summary.verification_code }}<br>
+            Verified under National Digital Health Mission EHR standards.
+          </div>
+          <div style="text-align:center;">
+            <div style="color:#0b3b60; font-family:'Courier New', monospace; font-weight:700; border-bottom:1px solid #0b3b60; padding-bottom:2px;">[DIGITALLY SIGNED]</div>
+            <div style="font-size:0.8rem; color:#475569;">{{ summary.doctor_name }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:24px;">
+        <button onclick="window.print()" class="btn btn-primary">🖨️ Print Official Summary</button>
+        <a href="javascript:history.back()" class="btn btn-outline" style="margin-left:10px;">← Back</a>
+      </div>
+
+      {% else %}
+      <div style="text-align:center; padding:40px 20px;">
+        <span style="font-size:3rem; color:#dc3545;">⚠️</span>
+        <h3 style="color:#dc3545; margin:12px 0 6px 0;">Record Not Found or Invalid Verification Code</h3>
+        <p style="color:#64748b;">The reference code <code>{{ ref_code }}</code> could not be validated in the national registry.</p>
+        <a href="/" class="btn btn-outline" style="margin-top:16px;">Return to Health Portal</a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

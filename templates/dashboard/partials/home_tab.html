@@ -1,0 +1,389 @@
+<!-- ==================== HOME TAB: HEALTH VITALS, LIVE QUEUE & CLINICAL DASHBOARD ==================== -->
+<div class="tab-pane active" id="tab-pane-home">
+  
+  <!-- 1. ACTIVE HEALTH ADVISORY BANNER (IF AVAILABLE) -->
+  {% if active_advisories %}
+  {% with adv=active_advisories.0 %}
+  <div class="alert-banner" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); border-left: 5px solid #ff9933; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display:flex; align-items:center; gap: 12px;">
+      <span style="font-size: 1.5rem;">⚠️</span>
+      <div>
+        <strong style="color:#856404; font-size: 0.95rem;">[PUBLIC HEALTH ADVISORY] {{ adv.title }}</strong>
+        <p style="margin: 2px 0 0 0; font-size: 0.85rem; color:#664d03;">{{ adv.description|truncatewords:25 }}</p>
+      </div>
+    </div>
+    <a href="javascript:void(0)" onclick="if(window.switchTab) switchTab('about');" class="btn btn-sm" style="background:#ff9933; color:#fff; white-space:nowrap;">
+      Read Advisory →
+    </a>
+  </div>
+  {% endwith %}
+  {% endif %}
+
+  <!-- 2. LIVE TODAY'S OPD APPOINTMENT & QUEUE TRACKER -->
+  {% if queue_info %}
+  <div class="opd-queue-card" style="background: linear-gradient(135deg, #0b3b60 0%, #174d75 100%); color: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 4px 14px rgba(11,59,96,0.25);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="background:rgba(255,255,255,0.2); padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;" data-i18n="opd_consultation_title">
+            🏥 TODAY'S OPD CONSULTATION
+          </span>
+          <span class="status-badge" style="background:#00a86b; color:#fff; font-size:0.75rem; padding:3px 8px; border-radius:4px;">
+            {{ queue_info.status }}
+          </span>
+        </div>
+        <h3 style="margin:0; font-size:1.3rem; font-weight:700; color:#fff;">Dr. {{ queue_info.doctor_name }}</h3>
+        <p style="margin:4px 0 0 0; color:rgba(255,255,255,0.85); font-size:0.9rem;">
+          {{ queue_info.department }} • {{ queue_info.room }} • {{ queue_info.time_slot }}
+        </p>
+      </div>
+      <div style="display:flex; gap:16px; align-items:center;">
+        <div style="text-align:center; background:rgba(255,255,255,0.15); padding:10px 16px; border-radius:8px; border:1px solid rgba(255,255,255,0.2);">
+          <div style="font-size:0.75rem; color:rgba(255,255,255,0.8); text-transform:uppercase;" data-i18n="your_token">Your Token</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#ffdd57;" id="live-user-token">{{ queue_info.token }}</div>
+        </div>
+        <div style="text-align:center; background:rgba(255,255,255,0.15); padding:10px 16px; border-radius:8px; border:1px solid rgba(255,255,255,0.2);">
+          <div style="font-size:0.75rem; color:rgba(255,255,255,0.8); text-transform:uppercase;" data-i18n="current_in_room">Current In Room</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#fff;" id="live-current-token">{{ queue_info.current_token }}</div>
+        </div>
+        <div style="text-align:center; background:rgba(255,255,255,0.15); padding:10px 16px; border-radius:8px; border:1px solid rgba(255,255,255,0.2);">
+          <div style="font-size:0.75rem; color:rgba(255,255,255,0.8); text-transform:uppercase;" data-i18n="patients_ahead">Patients Ahead</div>
+          <div style="font-size:1.6rem; font-weight:800; color:#48cae4;" id="live-patients-ahead">{{ queue_info.patients_ahead }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 3. EMERGENCY INFORMATION STRIP -->
+  <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:14px 18px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span style="font-size:1.4rem;">🚨</span>
+      <div>
+        <strong style="color:#0f172a; font-size:0.95rem;"><span data-i18n="emergency_profile_title">Emergency Medical Profile</span> (Blood Group: <span style="color:#e63946; font-weight:800;">{{ emergency_profile.blood_group|default:"B+" }}</span>)</strong>
+        <div style="font-size:0.85rem; color:#64748b;">
+          Emergency Contact: <strong>{{ emergency_profile.contact_name }}</strong> ({{ emergency_profile.phone_number }}) • Allergies: {{ emergency_profile.known_allergies|truncatewords:6 }}
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <a href="/emergency-card/{{ user.phone }}/" target="_blank" class="btn btn-sm btn-outline" style="border-color:#e63946; color:#e63946; font-weight:600;">
+        <span data-i18n="btn_view_emergency_card">🏥 View Emergency Card</span>
+      </a>
+      <a href="javascript:void(0)" onclick="if(window.switchTab) switchTab('settings');" class="btn btn-sm btn-outline">
+        <span data-i18n="btn_edit">⚙️ Edit</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 3.5 SMART HEALTH AI ASSISTANT DASHBOARD -->
+  <div class="smart-health-assistant-card" style="background: linear-gradient(135deg, #0b2545 0%, #134074 100%); color:#ffffff; border-radius:14px; padding:22px 24px; margin-bottom:28px; box-shadow:0 6px 20px rgba(11,37,69,0.25); border:1px solid rgba(255,255,255,0.15);">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:2rem; background:rgba(255,255,255,0.12); padding:6px 12px; border-radius:12px;">🧠</span>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h3 style="margin:0; font-size:1.35rem; font-weight:800; color:#ffffff;" data-i18n="ai_smart_title">Smart Health AI Assistant</h3>
+            <span style="background:rgba(255,153,51,0.25); color:#ff9933; border:1px solid #ff9933; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700; text-transform:uppercase;">Citizen AI Engine</span>
+          </div>
+          <p style="margin:4px 0 0 0; font-size:0.86rem; color:#cbd5e1;" data-i18n="ai_smart_sub">
+            Empowering citizens to understand medicines, laboratory investigations, doctor prescriptions, and health telemetry in simple language.
+          </p>
+        </div>
+      </div>
+      <div style="font-size:0.75rem; color:#94a3b8; background:rgba(0,0,0,0.25); padding:6px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);" data-i18n="ai_guardrails_active">
+        🛡️ Clinical Safety Guardrails Active
+      </div>
+    </div>
+
+    <!-- 5 Action Cards Matrix -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:14px;">
+      <button type="button" class="btn-ai-module" onclick="openSmartAiModal('modal-ai-medicine-scanner');" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:10px; padding:14px 12px; text-align:left; color:#ffffff; cursor:pointer; transition:all 0.2s ease; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-size:1.5rem;">💊</span>
+        <strong style="font-size:0.95rem; color:#ffffff;" data-i18n="ai_scan_medicine_title">Scan Medicine</strong>
+        <span style="font-size:0.75rem; color:#cbd5e1;" data-i18n="ai_scan_medicine_desc">OCR Camera identification & prescription cross-match</span>
+      </button>
+
+      <button type="button" class="btn-ai-module" onclick="openSmartAiModal('modal-ai-lab-explainer');" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:10px; padding:14px 12px; text-align:left; color:#ffffff; cursor:pointer; transition:all 0.2s ease; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-size:1.5rem;">🧪</span>
+        <strong style="font-size:0.95rem; color:#ffffff;" data-i18n="ai_explain_lab_title">Explain Lab Report</strong>
+        <span style="font-size:0.75rem; color:#cbd5e1;" data-i18n="ai_explain_lab_desc">5-point plain analysis & abnormal item alerts</span>
+      </button>
+
+      <button type="button" class="btn-ai-module" onclick="openSmartAiModal('modal-ai-prescription-explainer');" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:10px; padding:14px 12px; text-align:left; color:#ffffff; cursor:pointer; transition:all 0.2s ease; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-size:1.5rem;">📋</span>
+        <strong style="font-size:0.95rem; color:#ffffff;" data-i18n="ai_explain_rx_title">Explain Prescription</strong>
+        <span style="font-size:0.75rem; color:#cbd5e1;" data-i18n="ai_explain_rx_desc">Doctor dosage, food relation & timetable breakdown</span>
+      </button>
+
+      <button type="button" class="btn-ai-module" onclick="openSmartAiModal('modal-ai-health-trends');" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:10px; padding:14px 12px; text-align:left; color:#ffffff; cursor:pointer; transition:all 0.2s ease; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-size:1.5rem;">📈</span>
+        <strong style="font-size:0.95rem; color:#ffffff;" data-i18n="ai_explain_trends_title">Explain Health Trends</strong>
+        <span style="font-size:0.75rem; color:#cbd5e1;" data-i18n="ai_explain_trends_desc">6 vitals trajectory & doctor consultation questions</span>
+      </button>
+
+      <button type="button" class="btn-ai-module" onclick="openSmartAiModal('modal-ai-ask-report');" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:10px; padding:14px 12px; text-align:left; color:#ffffff; cursor:pointer; transition:all 0.2s ease; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-size:1.5rem;">💬</span>
+        <strong style="font-size:0.95rem; color:#ffffff;" data-i18n="ai_ask_report_title">Ask About My Report</strong>
+        <span style="font-size:0.75rem; color:#cbd5e1;" data-i18n="ai_ask_report_desc">Ask natural questions about tests & medicines</span>
+      </button>
+    </div>
+
+    <!-- Safety Disclaimer Bar -->
+    <div style="background:rgba(0,0,0,0.2); border-radius:8px; padding:8px 12px; font-size:0.75rem; color:#e2e8f0; display:flex; align-items:center; gap:8px;">
+      <span>ℹ️</span>
+      <span data-i18n="ai_disclaimer_notice">Smart Health Assistant does not replace a doctor, diagnose diseases, prescribe medicines, or alter prescriptions. Always consult your healthcare professional for medical decisions.</span>
+    </div>
+  </div>
+
+  <!-- 4. SECTION HEADER FOR VITALS -->
+  <div class="section-header">
+    <div class="section-title">
+      <h2>🏥 <span data-i18n="home_title">Health Vitals Telemetry</span></h2>
+      <span class="subtitle" id="last-sync-time">
+        {% if latest_vital %}
+        Last Clinical Update: {{ latest_vital.recorded_at|date:"d-M-Y H:i" }} ({{ latest_vital.source }})
+        {% else %}
+        Baseline Clinical Assessment
+        {% endif %}
+      </span>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button type="button" class="btn btn-sm btn-outline" onclick="if(window.VitalsChartEngine) VitalsChartEngine.fetchAndRenderAll();" data-i18n="refresh_plots">
+        🔄 Refresh Live Plots
+      </button>
+      <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('modal-add-vital').classList.add('open');" data-i18n="log_vitals_btn">
+        ➕ Log New Vitals
+      </button>
+    </div>
+  </div>
+
+  <!-- 5. 6 DYNAMIC VITALS BOXES -->
+  <div class="vitals-grid">
+    
+    <!-- 1. Blood Pressure (BP) -->
+    <div class="vital-card bp">
+      <div class="vital-card-header">
+        <div class="metric-title">
+          <div class="metric-icon">❤️</div>
+          <span data-i18n="bp_title">Blood Pressure (BP)</span>
+        </div>
+        <span class="vital-status-pill {% if latest_vital.bp_status %}{{ latest_vital.bp_status.color }}{% else %}success{% endif %}" id="card-bp-status">
+          {{ latest_vital.bp_status.label|default:"Optimal" }}
+        </span>
+      </div>
+      <div class="vital-value-row">
+        <span class="vital-value" id="card-bp-val">{{ latest_vital.bp_display|default:"120/80" }}</span>
+        <span class="vital-unit" data-i18n="bp_unit">mmHg</span>
+      </div>
+      <div class="vital-footer">
+        <span data-i18n="bp_footer">Standard: 120/80 mmHg</span>
+        <span style="color:#e63946; font-weight:600;">Systolic / Diastolic</span>
+      </div>
+    </div>
+
+    <!-- 2. Blood Oxygen Saturation (SpO2) -->
+    <div class="vital-card o2">
+      <div class="vital-card-header">
+        <div class="metric-title">
+          <div class="metric-icon">🫁</div>
+          <span data-i18n="o2_title">Blood Oxygen (SpO2)</span>
+        </div>
+        <span class="vital-status-pill {% if latest_vital.o2_status %}{{ latest_vital.o2_status.color }}{% else %}success{% endif %}" id="card-o2-status">
+          {{ latest_vital.o2_status.label|default:"Normal" }}
+        </span>
+      </div>
+      <div class="vital-value-row">
+        <span class="vital-value" id="card-o2-val">{{ latest_vital.o2_saturation|default:"98.5" }}%</span>
+        <span class="vital-unit" data-i18n="o2_unit">Oxygen Sat</span>
+      </div>
+      <div class="vital-footer">
+        <span data-i18n="o2_footer">Target: 95% - 100%</span>
+        <span style="color:#00a86b; font-weight:600;">Optimal Saturation</span>
+      </div>
+    </div>
+
+    <!-- 3. Blood Sugar Percentage -->
+    <div class="vital-card sugar">
+      <div class="vital-card-header">
+        <div class="metric-title">
+          <div class="metric-icon">🩸</div>
+          <span data-i18n="sugar_title">Sugar Percentage</span>
+        </div>
+        <span class="vital-status-pill {% if latest_vital.sugar_status %}{{ latest_vital.sugar_status.color }}{% else %}success{% endif %}" id="card-sugar-status">
+          {{ latest_vital.sugar_type|default:"FBS" }}: {{ latest_vital.sugar_status.label|default:"Normal" }}
+        </span>
+      </div>
+      <div class="vital-value-row">
+        <span class="vital-value" id="card-sugar-val">{{ latest_vital.sugar_level|default:"95.0" }}</span>
+        <span class="vital-unit" data-i18n="sugar_unit">mg/dL</span>
+      </div>
+      <div class="vital-footer">
+        <span data-i18n="sugar_footer">Fasting Goal: 70 - 100 mg/dL</span>
+        <span style="color:#ff9933; font-weight:600;">Glucose Index</span>
+      </div>
+    </div>
+
+    <!-- 4. Body Weight -->
+    <div class="vital-card weight">
+      <div class="vital-card-header">
+        <div class="metric-title">
+          <div class="metric-icon">⚖️</div>
+          <span data-i18n="weight_title">Body Weight</span>
+        </div>
+        <span class="vital-status-pill success">
+          BMI: 22.8 Normal
+        </span>
+      </div>
+      <div class="vital-value-row">
+        <span class="vital-value" id="card-weight-val">{{ latest_vital.weight|default:"68.0" }} kg</span>
+        <span class="vital-unit" data-i18n="weight_unit">Kilograms</span>
+      </div>
+      <div class="vital-footer">
+        <span>Standard: 172 cm</span>
+        <span style="color:#457b9d; font-weight:600;" data-i18n="weight_footer">Healthy BMI Range</span>
+      </div>
+    </div>
+
+    <!-- 5. Blood Percentage (Hemoglobin Hb) -->
+    <div class="vital-card blood">
+      <div class="vital-card-header">
+        <div class="metric-title">
+          <div class="metric-icon">🧬</div>
+          <span data-i18n="blood_title">Blood Percentage (Hb)</span>
+        </div>
+        <span class="vital-status-pill {% if latest_vital.hb_status %}{{ latest_vital.hb_status.color }}{% else %}success{% endif %}" id="card-blood-status">
+          {{ latest_vital.hb_status.label|default:"Healthy" }}
+        </span>
+      </div>
+      <div class="vital-value-row">
+        <span class="vital-value" id="card-blood-val">{{ latest_vital.blood_percentage|default:"14.2" }} g/dL</span>
+        <span class="vital-unit" data-i18n="blood_unit">Hemoglobin</span>
+      </div>
+      <div class="vital-footer">
+        <span data-i18n="blood_footer">Standard: 13.5 - 17.5 g/dL</span>
+        <span style="color:#9d0208; font-weight:600;">CBC Profile</span>
+      </div>
+    </div>
+
+    <!-- 6. Heart Rate (Pulse) -->
+    <div class="vital-card heart">
+      <div class="vital-card-header">
+        <div class="metric-title">
+          <div class="metric-icon">💓</div>
+          <span data-i18n="heart_title">Heart Rate</span>
+        </div>
+        <span class="vital-status-pill {% if latest_vital.hr_status %}{{ latest_vital.hr_status.color }}{% else %}success{% endif %}" id="card-hr-status">
+          {{ latest_vital.hr_status.label|default:"Normal Resting" }}
+        </span>
+      </div>
+      <div class="vital-value-row">
+        <span class="vital-value" id="card-hr-val">{{ latest_vital.heart_rate|default:"72" }} BPM</span>
+        <span class="vital-unit" data-i18n="heart_unit">Beats / Min</span>
+      </div>
+      <div class="vital-footer">
+        <span data-i18n="heart_footer">Resting: 60 - 100 BPM</span>
+        <span style="color:#e0218a; font-weight:600;">Pulse Regular</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 6. TODAY'S ACTIVE MEDICINES & ADHERENCE MATRIX -->
+  {% if prescriptions_with_doses %}
+  <div style="margin-top: 28px; margin-bottom: 28px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; font-size:1.15rem; color:#0f172a;"><span data-i18n="rx_title">💊 Today's Medicines & Adherence Tracker</span></h3>
+      <a href="javascript:void(0)" onclick="if(window.switchTab) switchTab('prescriptions');" style="color:#0b3b60; font-weight:600; font-size:0.9rem;" data-i18n="view_report_btn">View All Prescriptions →</a>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
+      {% for item in prescriptions_with_doses %}
+      {% with rx=item.prescription %}
+      <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+          <div>
+            <strong style="color:#0f172a; font-size:1rem;">{{ rx.medicine_name }}</strong>
+            <div style="font-size:0.8rem; color:#64748b;">{{ rx.generic_name|default:rx.medicine_name }} • {{ rx.dosage }}</div>
+          </div>
+          <span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:600;">
+            {{ rx.timing }}
+          </span>
+        </div>
+        <div style="font-size:0.85rem; color:#475569; margin-bottom:12px;">
+          Purpose: {{ rx.purpose|truncatewords:6 }}
+        </div>
+        <!-- Dose Adherence Action Buttons -->
+        <div style="display:flex; gap:8px; border-top:1px solid #f1f5f9; padding-top:10px;">
+          {% if rx.morning %}
+          <button type="button" class="btn btn-sm {% if item.morning_taken %}btn-primary{% else %}btn-outline{% endif %}" onclick="toggleDoseAdherence({{ rx.id }}, 'MORNING', this)" style="flex:1; font-size:0.75rem; padding:4px 6px;">
+            {% if item.morning_taken %}✓ Taken (Morning){% else %}☀️ 08:00 AM{% endif %}
+          </button>
+          {% endif %}
+          {% if rx.afternoon %}
+          <button type="button" class="btn btn-sm {% if item.afternoon_taken %}btn-primary{% else %}btn-outline{% endif %}" onclick="toggleDoseAdherence({{ rx.id }}, 'AFTERNOON', this)" style="flex:1; font-size:0.75rem; padding:4px 6px;">
+            {% if item.afternoon_taken %}✓ Taken (Noon){% else %}🌤️ 01:00 PM{% endif %}
+          </button>
+          {% endif %}
+          {% if rx.night %}
+          <button type="button" class="btn btn-sm {% if item.night_taken %}btn-primary{% else %}btn-outline{% endif %}" onclick="toggleDoseAdherence({{ rx.id }}, 'NIGHT', this)" style="flex:1; font-size:0.75rem; padding:4px 6px;">
+            {% if item.night_taken %}✓ Taken (Night){% else %}🌙 08:00 PM{% endif %}
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 7. INTERACTIVE TELEMETRY CHARTS SECTION -->
+  <div class="section-title" style="margin-bottom: 16px; margin-top:20px;">
+    <h2>📈 <span data-i18n="plots_heading">Live Graphical Plots & Clinical Trends</span></h2>
+    <span class="subtitle" data-i18n="plots_sub">Continuously synchronized with your visited hospital diagnostic records</span>
+  </div>
+
+  <div class="charts-grid">
+    <!-- Chart 1: Blood Pressure Telemetry -->
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <h3 data-i18n="chart_bp_title">❤️ Blood Pressure Trend (Systolic & Diastolic mmHg)</h3>
+      </div>
+      <div class="chart-canvas-wrapper">
+        <canvas id="chart-bp-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 2: Blood Sugar Telemetry -->
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <h3 data-i18n="chart_sugar_title">🩸 Blood Sugar Level (mg/dL)</h3>
+      </div>
+      <div class="chart-canvas-wrapper">
+        <canvas id="chart-sugar-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 3: Heart Rate Pulse -->
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <h3 data-i18n="chart_hr_title">💓 Heart Rate Pulse Wave (BPM)</h3>
+      </div>
+      <div class="chart-canvas-wrapper">
+        <canvas id="chart-hr-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 4: Blood Percentage Hemoglobin -->
+    <div class="chart-box">
+      <div class="chart-box-header">
+        <h3 data-i18n="chart_hb_title">🧬 Blood Hemoglobin (Hb g/dL)</h3>
+      </div>
+      <div class="chart-canvas-wrapper">
+        <canvas id="chart-hb-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+

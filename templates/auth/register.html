@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Citizen Account | Hospital Government of India{% endblock %}
+
+{% block content %}
+<div style="max-width: 580px; margin: 24px auto;">
+  <div class="vital-card" style="padding: 32px; border-top: 4px solid var(--accent-saffron);">
+    
+    <div style="text-align:center; margin-bottom: 24px;">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(255, 153, 51, 0.15); color: #ff9933; display:inline-flex; align-items:center; justify-content:center; font-size: 1.6rem; margin-bottom: 10px;">
+        📝
+      </div>
+      <h2 style="color: var(--primary-navy); font-weight: 700; font-size: 1.4rem;" data-i18n="register_title">Citizen Patient Registration</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;" data-i18n="register_sub">Link with 12-Digit Aadhaar Card for National Health Account (ABHA)</p>
+    </div>
+
+    <form method="POST" action="{% url 'register' %}">
+      {% csrf_token %}
+      <input type="hidden" name="is_aadhaar_verified" id="is-aadhaar-verified-field" value="false">
+
+      <!-- Full Name -->
+      <div class="form-group">
+        <label class="form-label" for="full_name" data-i18n="full_name_label">Full Name (पूरा नाम)</label>
+        <input type="text" name="full_name" id="full_name" class="form-control" placeholder="e.g. Ramesh Kumar Verma" required>
+      </div>
+
+      <!-- Phone Number -->
+      <div class="form-group">
+        <label class="form-label" for="phone-input" data-i18n="phone_number_label">Mobile Phone Number</label>
+        <div style="display:flex; align-items:center; position:relative;">
+          <span style="position:absolute; left: 12px; font-weight: 600; color: var(--text-muted); font-size: 0.9rem;">+91</span>
+          <input type="text" name="phone" id="phone-input" class="form-control" style="padding-left: 50px;" placeholder="9876543210" required>
+        </div>
+      </div>
+
+      <!-- Aadhaar Number with OTP Verification Flow -->
+      <div class="form-group" style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1.5px solid var(--border-color);">
+        <div class="form-label">
+          <span><span data-i18n="aadhaar_label">Aadhaar Number (12 Digit)</span> <span style="color:#e63946;">*</span></span>
+          <span id="aadhaar-badge-verified" style="display:none; color:#2e7d32; font-weight:700; font-size:0.8rem;">✓ Verified</span>
+        </div>
+        
+        <div style="display:flex; gap: 8px;">
+          <input type="text" name="aadhaar_number" id="aadhaar-number-input" class="form-control" placeholder="XXXX-XXXX-XXXX" maxlength="14" style="letter-spacing: 1px;" required>
+          <button type="button" id="btn-send-aadhaar-otp" class="btn btn-saffron btn-sm" style="white-space:nowrap;" data-i18n="get_otp_btn">
+            Get OTP
+          </button>
+        </div>
+
+        <div id="aadhaar-status-msg" style="display:none; font-size: 0.8rem; margin-top: 8px; padding: 8px 12px; border-radius: 6px;"></div>
+
+        <!-- Aadhaar OTP Input (Revealed after Get OTP) -->
+        <div id="aadhaar-otp-container" style="display:none; margin-top: 12px;">
+          <label style="font-size:0.82rem; font-weight:600; color:var(--primary-navy); margin-bottom:4px; display:block;" data-i18n="enter_otp_label">Enter 6-Digit OTP sent to Mobile</label>
+          <div style="display:flex; gap: 8px;">
+            <input type="text" id="aadhaar-otp-input" class="form-control" placeholder="6-digit OTP" maxlength="6" style="letter-spacing: 2px;">
+            <button type="button" id="btn-verify-aadhaar-otp" class="btn btn-emerald btn-sm" style="white-space:nowrap;" data-i18n="verify_otp_btn">
+              Verify OTP
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password & Demographics Row -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label" for="password" data-i18n="password_label">Create Password</label>
+          <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="age" data-i18n="age_label">Age</label>
+          <input type="number" name="age" id="age" class="form-control" value="32" min="1" max="120">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label" for="gender" data-i18n="gender_label">Gender</label>
+          <select name="gender" id="gender" class="form-select">
+            <option value="Male" selected>Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="blood_group" data-i18n="blood_group_label">Blood Group</label>
+          <select name="blood_group" id="blood_group" class="form-select">
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+" selected>B+</option>
+            <option value="B-">B-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label" for="city" data-i18n="city_label">City / District</label>
+          <input type="text" name="city" id="city" class="form-control" value="New Delhi">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="state">State</label>
+          <input type="text" name="state" id="state" class="form-control" value="Delhi">
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 1rem;" data-i18n="create_account_link">
+        Register & Create Health Account
+      </button>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 0.9rem; color: var(--text-muted);">
+        Already have an account? 
+        <a href="{% url 'patient_login' %}" style="color: var(--primary-navy); font-weight: 700; text-decoration: none;" data-i18n="portal_login">
+          Sign in here
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

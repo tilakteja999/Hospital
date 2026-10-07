@@ -1,0 +1,46 @@
+<!-- ==================== NOTIFICATIONS TAB ==================== -->
+<div class="tab-pane" id="tab-pane-notifications">
+  
+  <div class="section-header">
+    <div class="section-title">
+      <h2>🔔 <span data-i18n="notifications_title">Health Reminders & Public Health Advisories</span></h2>
+      <span class="subtitle" data-i18n="notifications_sub">Routine checkup alerts, vaccination drives, and Government health updates</span>
+    </div>
+  </div>
+
+  <div class="notification-list">
+    {% if notifications %}
+      {% for note in notifications %}
+      <div class="notification-card {% if not note.is_read %}unread{% endif %}">
+        <div class="notification-icon">
+          {% if note.category == 'Checkup Reminder' %}🩺
+          {% elif note.category == 'Medication Alert' %}💊
+          {% elif note.category == 'Immunization' %}💉
+          {% elif note.category == 'Record Update' %}📋
+          {% else %}📢{% endif %}
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
+            <h3 style="font-size:0.98rem; font-weight:700; color:var(--primary-navy);">{{ note.title }}</h3>
+            <span style="font-size:0.75rem; color:var(--text-muted);">{{ note.created_at|date:"d-M-Y h:i A" }}</span>
+          </div>
+          <p style="font-size:0.88rem; color:var(--text-main); line-height:1.45; margin-bottom:8px;">{{ note.message }}</p>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="brand-badge">{{ note.category }}</span>
+            <button type="button" class="btn btn-sm btn-outline" onclick="fetch('/api/notifications/{{ note.id }}/read/').then(() => this.closest('.notification-card').remove());" data-i18n="dismiss_btn">
+              Dismiss / Mark Read
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="background:#ffffff; border-radius:12px; padding:40px 20px; text-align:center; border:1px solid var(--border-color);">
+        <div style="font-size:2.5rem; margin-bottom:10px;">🔔</div>
+        <h3 style="color:var(--primary-navy); margin-bottom:6px;" data-i18n="no_notifications">No New Health Notifications</h3>
+        <p style="color:var(--text-muted); font-size:0.9rem;" data-i18n="no_notif_sub">You are all caught up! Routine checkup reminders and immunizations will be alerted here.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>

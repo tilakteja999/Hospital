@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctor Login | Hospital Government of India{% endblock %}
+
+{% block content %}
+<div style="max-width: 460px; margin: 30px auto;">
+  <div class="vital-card" style="padding: 32px; border-top: 4px solid var(--accent-emerald);">
+    
+    <div style="text-align:center; margin-bottom: 24px;">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(0, 168, 107, 0.15); color: #00a86b; display:inline-flex; align-items:center; justify-content:center; font-size: 1.6rem; margin-bottom: 10px;">
+        👨‍⚕️
+      </div>
+      <h2 style="color: var(--primary-navy); font-weight: 700; font-size: 1.4rem;">Doctor Portal Login</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">National Medical Commission (NMC) Registered Doctors</p>
+    </div>
+
+    <form method="POST" action="{% url 'doctor_login' %}">
+      {% csrf_token %}
+
+      <!-- Phone Number -->
+      <div class="form-group">
+        <label class="form-label" for="phone">
+          <span>Doctor Phone / Reg Number</span>
+        </label>
+        <div style="display:flex; align-items:center; position:relative;">
+          <span style="position:absolute; left: 12px; font-weight: 600; color: var(--text-muted); font-size: 0.9rem;">+91</span>
+          <input type="text" name="phone" id="phone" class="form-control" style="padding-left: 50px;" placeholder="9123456780" value="9123456780" required>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <div class="form-label">
+          <label for="password">Password</label>
+          <a href="{% url 'forgot_password' %}" style="font-size: 0.82rem; color: #00a86b; text-decoration: none; font-weight: 600;">
+            Forgot Password?
+          </a>
+        </div>
+        <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" value="doc123" required>
+      </div>
+
+      <!-- Login Button -->
+      <button type="submit" class="btn btn-emerald" style="width: 100%; padding: 12px; margin-top: 6px; font-size: 1rem;">
+        Login as Doctor
+      </button>
+
+      <div style="background: #eef4f8; padding: 12px; border-radius: var(--radius-sm); text-align: center; margin-top: 20px;">
+        <span style="font-size: 0.8rem; color: var(--primary-navy); font-weight: 600;">Doctor Demo Credentials:</span>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Phone: <strong>9123456780</strong> | Password: <strong>doc123</strong></div>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 0.88rem;">
+        <a href="{% url 'role_portal' %}" style="color: var(--text-muted); text-decoration: none;">
+          ← Switch Role
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

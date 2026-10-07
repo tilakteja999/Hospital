@@ -1,0 +1,219 @@
+<!-- ==================== TAB: PHYSIOTHERAPY & HEALTH EDUCATION VIDEOS ==================== -->
+<div class="tab-pane" id="pane-physio" style="display:none;">
+  
+  <!-- Banner Header -->
+  <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #1d4ed8 100%); color: #ffffff; padding: 24px 28px; border-radius: 14px; margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow: 0 6px 20px rgba(37,99,235,0.18);">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.8rem;">🧘</span>
+        <h2 style="font-size:1.45rem; font-weight:800; margin:0; letter-spacing:-0.3px;" data-i18n="physio_banner_title">
+          National Tele-Physiotherapy & Health Education Videos
+        </h2>
+        <span class="badge" style="background:rgba(255,255,255,0.22); color:#ffffff; font-size:0.78rem; font-weight:700;" data-i18n="physio_badge_protocol">AIIMS & AIIPMR Protocol</span>
+      </div>
+      <p style="color:#dbeafe; font-size:0.88rem; margin:8px 0 0 0; max-width:780px;" data-i18n="physio_banner_sub">
+        Doctor-prescribed physiotherapy exercises, therapeutic stretches, joint mobility routines, and physical rehabilitation. Watch video demonstrations and practice safely at home.
+      </p>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span class="vital-status-pill success" style="font-size:0.85rem; padding:8px 14px;" data-i18n="physio_free_tag">
+        ✓ 100% Free Public Health Service
+      </span>
+    </div>
+  </div>
+
+  <!-- Category Filter Pills & Search Bar -->
+  <div class="vital-card" style="padding: 16px 20px; margin-bottom: 24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 12px;">
+      <div style="font-size:0.88rem; font-weight:700; color:var(--primary-navy);" data-i18n="physio_filter_heading">
+        🎯 Select Treatment Area / Condition:
+      </div>
+      <input type="text" id="physio-search-input" class="form-control" placeholder="Search exercises (e.g. back pain, knee, neck)..." data-i18n-placeholder="physio_search_placeholder" style="font-size:0.82rem; padding:6px 12px; width:280px;">
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;" id="physio-category-pills">
+      <button type="button" class="btn btn-sm btn-physio-filter active" data-cat="all" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#1e3a8a; color:#ffffff; border:none; cursor:pointer;" data-i18n="physio_cat_all">
+        🌐 All Exercises
+      </button>
+      <button type="button" class="btn btn-sm btn-physio-filter" data-cat="back" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="physio_cat_back">
+        🦴 Lumbar Spine & Back Strain
+      </button>
+      <button type="button" class="btn btn-sm btn-physio-filter" data-cat="knee" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="physio_cat_knee">
+        🦵 Knee Joint & Osteoarthritis
+      </button>
+      <button type="button" class="btn btn-sm btn-physio-filter" data-cat="neck" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="physio_cat_neck">
+        💆 Neck & Cervical Spondylosis
+      </button>
+      <button type="button" class="btn btn-sm btn-physio-filter" data-cat="shoulder" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="physio_cat_shoulder">
+        💪 Frozen Shoulder & Rotator Cuff
+      </button>
+      <button type="button" class="btn btn-sm btn-physio-filter" data-cat="stroke" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="physio_cat_stroke">
+        🧠 Post-Stroke & Balance Rehab
+      </button>
+    </div>
+  </div>
+
+  <!-- VIDEO CARDS GRID (Populated from database-backed models) -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; margin-bottom: 30px;" id="physio-video-grid">
+
+    {% for video in physio_videos %}
+    <div class="physio-card" data-cat="{{ video.category }}" data-title="{{ video.title|lower }} {{ video.description|lower }} {{ video.instructions|lower }}" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s, box-shadow 0.2s;">
+      <div>
+        <!-- Video Poster / Preview Banner with Interactive Play Button -->
+        <div style="position:relative; background:#0f172a; height:195px; display:flex; align-items:center; justify-content:center; color:#ffffff; text-align:center;">
+          <div style="position:absolute; inset:0; background:linear-gradient(to bottom, rgba(15,23,42,0.4), rgba(15,23,42,0.85)), url('{% if video.thumbnail_url %}{{ video.thumbnail_url }}{% else %}https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=600&q=80{% endif %}') center/cover;"></div>
+          
+          <button type="button" class="btn-play-physio-video" 
+                  data-url="{{ video.embed_url }}" 
+                  data-title="{{ video.title }}"
+                  data-desc="{{ video.description }}"
+                  data-source="{{ video.source_name }}"
+                  data-instructions="{{ video.instructions }}"
+                  data-external="{% if video.external_url %}{{ video.external_url }}{% else %}{{ video.embed_url }}{% endif %}"
+                  data-platform="{{ video.external_platform }}"
+                  style="position:relative; z-index:2; background:rgba(37,99,235,0.92); border:none; color:#ffffff; width:62px; height:62px; border-radius:50%; font-size:1.5rem; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 0 24px rgba(37,99,235,0.7); transition:transform 0.2s;"
+                  title="Click to play video"
+                  aria-label="Play {{ video.title }}">
+            ▶
+          </button>
+          
+          <!-- Badges on Preview -->
+          <span style="position:absolute; top:12px; left:12px; background:rgba(0,0,0,0.75); color:#ffffff; padding:3px 8px; border-radius:6px; font-size:0.72rem; font-weight:700; z-index:2;">
+            🌐 {{ video.external_platform }}
+          </span>
+          <span style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.8); color:#ffffff; padding:3px 8px; border-radius:6px; font-size:0.74rem; font-weight:700; z-index:2;">
+            ⏱️ {{ video.duration_text }}
+          </span>
+        </div>
+
+        <div style="padding:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+            <span class="badge" style="background:{% if video.category == 'back' %}#dbeafe; color:#1e40af{% elif video.category == 'knee' %}#dcfce7; color:#15803d{% elif video.category == 'neck' %}#fef3c7; color:#b45309{% elif video.category == 'shoulder' %}#fce7f3; color:#9d174d{% else %}#e0e7ff; color:#4338ca{% endif %}; font-weight:800; font-size:0.75rem;">
+              {% if video.category == 'back' %}🦴 LUMBAR SPINE{% elif video.category == 'knee' %}🦵 KNEE REHAB{% elif video.category == 'neck' %}💆 CERVICAL CARE{% elif video.category == 'shoulder' %}💪 SHOULDER MOBILITY{% else %}🧠 NEURO REHAB{% endif %}
+            </span>
+            <span style="font-size:0.74rem; color:var(--text-muted); font-weight:600;">
+              Level: {{ video.level_text }}
+            </span>
+          </div>
+
+          <h4 style="font-size:1.1rem; color:var(--primary-navy); font-weight:800; margin:4px 0 8px 0; line-height:1.35;">
+            {{ video.title }}
+          </h4>
+          
+          <p style="font-size:0.84rem; color:#475569; line-height:1.5; margin-bottom:12px;">
+            {{ video.description }}
+          </p>
+
+          <div style="background:#f8fafc; padding:10px 12px; border-radius:8px; font-size:0.8rem; color:#334155; margin-top:8px; border-left:3px solid #3b82f6;">
+            <strong>📋 <span data-i18n="instructions_label">Instructions</span>:</strong> {{ video.instructions }}
+          </div>
+
+          <div style="font-size:0.74rem; color:#64748b; margin-top:10px;">
+            🏥 Source: <strong>{{ video.source_name }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Footer with Play Button & Direct External Link -->
+      <div style="padding:14px 20px; background:#f8fafc; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        {% if video.external_url %}
+        <a href="{{ video.external_url }}" target="_blank" rel="noopener noreferrer" style="font-size:0.76rem; color:#2563eb; text-decoration:none; font-weight:600; display:flex; align-items:center; gap:4px;" title="Open directly on host website">
+          <span>↗ Host Link</span>
+        </a>
+        {% else %}
+        <span style="font-size:0.74rem; color:#94a3b8;">AIIMS Verified</span>
+        {% endif %}
+
+        <button type="button" class="btn btn-sm btn-primary btn-play-physio-video" 
+                data-url="{{ video.embed_url }}" 
+                data-title="{{ video.title }}"
+                data-desc="{{ video.description }}"
+                data-source="{{ video.source_name }}"
+                data-instructions="{{ video.instructions }}"
+                data-external="{% if video.external_url %}{{ video.external_url }}{% else %}{{ video.embed_url }}{% endif %}"
+                data-platform="{{ video.external_platform }}"
+                style="font-size:0.78rem; font-weight:700;">
+          ▶ <span data-i18n="physio_play_video">Play Video</span>
+        </button>
+      </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align:center; padding:40px; background:#f8fafc; border-radius:12px; color:var(--text-muted);">
+      <div style="font-size:2.5rem; margin-bottom:10px;">🧘</div>
+      <h4 data-i18n="no_physio_videos">No Physiotherapy Videos Found</h4>
+      <p style="font-size:0.85rem;" data-i18n="physio_sync_msg">Physiotherapy exercises and rehabilitation videos will load here.</p>
+    </div>
+    {% endfor %}
+
+  </div>
+
+</div>
+
+<!-- ==================== MODAL: EMBEDDED PHYSIOTHERAPY VIDEO PLAYER ==================== -->
+<div class="modal-backdrop" id="modal-physio-player">
+  <div class="modal-card" style="max-width:880px; width:95%; padding:0; border-radius:16px; overflow:hidden; background:#0b1329; color:#ffffff; box-shadow:0 12px 40px rgba(0,0,0,0.5);">
+    
+    <!-- Player Header -->
+    <div class="modal-header" style="background:#0f172a; padding:16px 22px; border-bottom:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px; overflow:hidden;">
+        <span style="font-size:1.3rem;">🧘</span>
+        <div style="overflow:hidden;">
+          <h3 id="physio-modal-video-title" style="color:#ffffff; font-size:1.05rem; margin:0; font-weight:700; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">
+            Physiotherapy Exercise Video
+          </h3>
+          <div id="physio-modal-video-source" style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">
+            AIIMS Tele-Physiotherapy Clinical Protocol
+          </div>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" id="btn-close-physio-modal" style="color:#ffffff; font-size:1.4rem; background:transparent; border:none; cursor:pointer;" aria-label="Close Video Player">&times;</button>
+    </div>
+
+    <!-- Responsive 16:9 Embedded Video Container -->
+    <div style="position:relative; width:100%; padding-top:56.25%; background:#000000; overflow:hidden;">
+      <iframe id="physio-iframe-player" 
+              src="" 
+              title="Physiotherapy Exercise Video Player"
+              style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              allowfullscreen>
+      </iframe>
+    </div>
+
+    <!-- Video Controls & Metadata Bar -->
+    <div style="padding:14px 22px; background:#0f172a; border-top:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:0.78rem; color:#38bdf8; background:rgba(56,189,248,0.12); padding:4px 10px; border-radius:6px;">
+          ✓ Legitimate Embeddable Public Health Stream
+        </span>
+        <span id="physio-modal-platform-badge" style="font-size:0.75rem; color:#94a3b8;">
+          Externally Hosted
+        </span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a id="physio-modal-external-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline" style="color:#ffffff; border-color:rgba(255,255,255,0.3); font-size:0.78rem; text-decoration:none; padding:5px 12px; display:inline-flex; align-items:center; gap:4px;">
+          <span>↗ Open on Host Platform</span>
+        </a>
+        <button type="button" class="btn btn-sm btn-outline" id="btn-fullscreen-physio" style="color:#ffffff; border-color:rgba(255,255,255,0.3); font-size:0.78rem; padding:5px 12px;">
+          ⛶ Fullscreen
+        </button>
+      </div>
+    </div>
+
+    <!-- Instructions & Safety Precautions Drawer -->
+    <div style="padding:16px 22px; background:#0b1329; border-top:1px solid #1e293b; font-size:0.83rem; line-height:1.5;">
+      <div style="font-weight:700; color:#38bdf8; margin-bottom:4px;">
+        📋 Clinical Exercise Instructions:
+      </div>
+      <p id="physio-modal-instructions" style="color:#cbd5e1; margin:0 0 10px 0;">
+        Follow the exercise instructions smoothly and stop immediately if you experience sharp or sudden pain.
+      </p>
+      <div style="background:rgba(239,68,68,0.12); border-left:3px solid #ef4444; padding:8px 12px; border-radius:6px; font-size:0.76rem; color:#fca5a5;">
+        ⚠️ <strong>Safety Disclaimer:</strong> Practice within your comfortable pain-free range. If symptoms worsen, consult your hospital physiotherapist or doctor.
+      </div>
+    </div>
+
+  </div>
+</div>

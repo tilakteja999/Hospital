@@ -1,0 +1,595 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ hospital.name }} | Hospital Admin Portal | Swasthya Setu{% endblock %}
+
+{% block content %}
+<style>
+  .hosp-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    padding: 24px 32px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .hosp-tab-nav {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .hosp-tab-btn {
+    padding: 10px 18px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .hosp-tab-btn:hover {
+    color: #0284c7;
+    background: rgba(2, 132, 199, 0.05);
+  }
+  .hosp-tab-btn.active {
+    color: #0284c7;
+    border-bottom: 3px solid #0284c7;
+    background: rgba(2, 132, 199, 0.1);
+  }
+  .badge-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-booked { background: #dbeafe; color: #1e40af; }
+  .badge-completed { background: #dcfce7; color: #166534; }
+  .badge-cancelled { background: #fee2e2; color: #991b1b; }
+  .badge-noshow { background: #f3f4f6; color: #4b5563; }
+  .badge-emergency { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; animation: pulse 1.5s infinite; }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+  }
+</style>
+
+<div style="max-width: 1350px; margin: 20px auto; padding: 0 16px;">
+
+  <!-- Hospital Header Banner -->
+  <div class="hosp-banner">
+    <div style="display: flex; align-items: center; gap: 18px;">
+      <div style="width: 64px; height: 64px; border-radius: 16px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border: 1px solid rgba(255,255,255,0.2);">
+        🏥
+      </div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h1 style="font-size: 1.6rem; font-weight: 800; color: #ffffff; margin: 0;">{{ hospital.name }}</h1>
+          <span style="background: #00a86b; color: #fff; font-size: 0.75rem; padding: 3px 10px; border-radius: 12px; font-weight: 700;">✓ Verified Facility</span>
+        </div>
+        <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 0.9rem; display: flex; align-items: center; gap: 12px;">
+          <span>📍 {{ hospital.address }}, {{ hospital.city }}</span>
+          <span>📞 {{ hospital.contact_phone }}</span>
+          <span>✉️ {{ hospital.email }}</span>
+        </p>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <button class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.3);" onclick="exportReport('opd_daily')">
+        📥 Export Today's OPD (CSV)
+      </button>
+      <button class="btn" style="background: #0284c7; color: #fff; border: none;" onclick="openAddDoctorModal()">
+        + Add New Doctor
+      </button>
+    </div>
+  </div>
+
+  <!-- Critical Hospital Alerts -->
+  {% if resource.icu_occupancy_pct >= 85.0 %}
+  <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 14px 20px; border-radius: var(--radius-md); margin-bottom: 20px; color: #991b1b; font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 1.3rem;">⚠️</span>
+      <span>HIGH ICU OCCUPANCY ALERT: ICU bed capacity is at <strong>{{ resource.icu_occupancy_pct }}%</strong>. Please manage ICU intake!</span>
+    </div>
+    <button onclick="switchTab('tab-resources')" class="btn btn-sm" style="background: #dc2626; color: #fff;">Manage Beds</button>
+  </div>
+  {% endif %}
+
+  <!-- Tab Navigation -->
+  <div class="hosp-tab-nav">
+    <button class="hosp-tab-btn active" id="btn-overview" onclick="switchTab('tab-overview')">📊 Overview & Dashboard</button>
+    <button class="hosp-tab-btn" id="btn-apts" onclick="switchTab('tab-apts')">📅 Appointment Management</button>
+    <button class="hosp-tab-btn" id="btn-doctors" onclick="switchTab('tab-doctors')">👨‍⚕️ Doctor Roster ({{ total_doctors }})</button>
+    <button class="hosp-tab-btn" id="btn-depts" onclick="switchTab('tab-depts')">🏢 Departments & Slots</button>
+    <button class="hosp-tab-btn" id="btn-queue" onclick="switchTab('tab-queue')">⏳ Live OPD Queue</button>
+    <button class="hosp-tab-btn" id="btn-resources" onclick="switchTab('tab-resources')">🛏️ Bed & Resource Matrix</button>
+    <button class="hosp-tab-btn" id="btn-reports" onclick="switchTab('tab-reports')">📈 Reports & Analytics</button>
+  </div>
+
+  <!-- TAB 1: OVERVIEW & DASHBOARD -->
+  <div id="tab-overview">
+    <!-- Stat Counter Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 24px;">
+      
+      <div class="vital-card" style="border-top: 4px solid #0284c7;">
+        <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">TODAY'S TOTAL BOOKINGS</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary-navy); margin: 6px 0;">{{ today_total }}</div>
+        <div style="font-size: 0.78rem; color: #0284c7;">Yesterday: {{ yesterday_total }}</div>
+      </div>
+
+      <div class="vital-card" style="border-top: 4px solid #10b981;">
+        <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">COMPLETED TODAY</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #10b981; margin: 6px 0;">{{ today_completed }}</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted);">Consultations completed</div>
+      </div>
+
+      <div class="vital-card" style="border-top: 4px solid #f59e0b;">
+        <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">PENDING / IN-QUEUE</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #f59e0b; margin: 6px 0;">{{ today_pending }}</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted);">Active in hospital</div>
+      </div>
+
+      <div class="vital-card" style="border-top: 4px solid #ef4444;">
+        <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">EMERGENCY BOOKINGS</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #ef4444; margin: 6px 0;">{{ today_emergency }}</div>
+        <div style="font-size: 0.78rem; color: #ef4444;">High priority triage</div>
+      </div>
+
+      <div class="vital-card" style="border-top: 4px solid #8b5cf6;">
+        <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">TOTAL DOCTORS</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #8b5cf6; margin: 6px 0;">{{ total_doctors }}</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted);">Active: {{ active_doctors }} | On Leave: {{ doctors_on_leave }}</div>
+      </div>
+
+      <div class="vital-card" style="border-top: 4px solid #ec4899;">
+        <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">ICU BED OCCUPANCY</div>
+        <div style="font-size: 1.8rem; font-weight: 800; color: #ec4899; margin: 6px 0;">{{ resource.icu_occupancy_pct }}%</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted);">{{ resource.icu_beds_occupied }} / {{ resource.icu_beds_total }} Occupied</div>
+      </div>
+
+    </div>
+
+    <!-- Analytics Charts Grid -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;">
+      
+      <div class="vital-card">
+        <h3 style="font-size: 1.1rem; color: var(--primary-navy); margin-bottom: 16px;">📈 Hospital Appointment Load Trend</h3>
+        <canvas id="chart-load-trend" height="140"></canvas>
+      </div>
+
+      <div class="vital-card">
+        <h3 style="font-size: 1.1rem; color: var(--primary-navy); margin-bottom: 16px;">🍰 Appointment Status Distribution</h3>
+        <canvas id="chart-status-dist" height="180"></canvas>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB 2: APPOINTMENT MANAGEMENT -->
+  <div id="tab-apts" style="display: none;">
+    <div class="vital-card" style="margin-bottom: 24px;">
+      <h3 style="font-size: 1.2rem; color: var(--primary-navy); margin-bottom: 16px;">Search & Filter Hospital Appointments</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px;">
+        
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Date Range</label>
+          <select id="filter-date" class="form-control" onchange="loadAppointments()">
+            <option value="today" selected>Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="this_week">This Week</option>
+            <option value="this_month">This Month</option>
+            <option value="this_year">This Year</option>
+            <option value="all">All Time</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Status</label>
+          <select id="filter-status" class="form-control" onchange="loadAppointments()">
+            <option value="ALL">All Statuses</option>
+            <option value="PENDING">Pending / Active Queue</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="NO_SHOW">No-Show</option>
+            <option value="RESCHEDULED">Rescheduled</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Filter Doctor</label>
+          <select id="filter-doctor" class="form-control" onchange="loadAppointments()">
+            <option value="">All Doctors</option>
+            {% for d in doctors %}
+            <option value="{{ d.id }}">{{ d.name }} ({{ d.department }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Search Patient / Token</label>
+          <input type="text" id="filter-search" class="form-control" placeholder="Search Patient, ABHA, Ref #" onkeyup="loadAppointments()">
+        </div>
+
+      </div>
+
+      <!-- Appointments Table -->
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+          <thead>
+            <tr style="background: #f8fafc; border-bottom: 2px solid var(--border-color);">
+              <th style="padding: 12px;">Token & Ref</th>
+              <th style="padding: 12px;">Patient Details</th>
+              <th style="padding: 12px;">Doctor & Department</th>
+              <th style="padding: 12px;">Date & Time Slot</th>
+              <th style="padding: 12px;">Status</th>
+              <th style="padding: 12px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="apts-table-body">
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading appointments...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: DOCTOR MANAGEMENT -->
+  <div id="tab-doctors" style="display: none;">
+    <div class="vital-card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h3 style="font-size: 1.2rem; color: var(--primary-navy); margin: 0;">Doctor Roster & Credentials</h3>
+        <button class="btn" style="background: #0284c7; color: #fff;" onclick="openAddDoctorModal()">+ Register New Doctor</button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+          <thead>
+            <tr style="background: #f8fafc; border-bottom: 2px solid var(--border-color);">
+              <th style="padding: 12px;">Doctor Name & Reg ID</th>
+              <th style="padding: 12px;">Department & Qualification</th>
+              <th style="padding: 12px;">OPD Timings & Fee</th>
+              <th style="padding: 12px;">Govt Verification Status</th>
+              <th style="padding: 12px;">Duty Status</th>
+              <th style="padding: 12px; text-align: right;">Manage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in doctors %}
+            <tr style="border-bottom: 1px solid var(--border-color);">
+              <td style="padding: 12px;">
+                <div style="font-weight: 700; color: var(--primary-navy);">{{ d.name }}</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">ID: {{ d.doctor_reg_id }}</div>
+              </td>
+              <td style="padding: 12px;">
+                <div>{{ d.department }}</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">{{ d.qualification }} ({{ d.experience_years }} yrs exp)</div>
+              </td>
+              <td style="padding: 12px;">
+                <div>{{ d.opd_start_time }} - {{ d.opd_end_time }}</div>
+                <div style="font-size: 0.78rem; color: #0284c7;">Fee: ₹{{ d.consultation_fee }} | {{ d.appointment_duration }} mins/slot</div>
+              </td>
+              <td style="padding: 12px;">
+                {% if d.verification_status == 'VERIFIED' %}
+                <span class="badge-status badge-completed">✓ VERIFIED</span>
+                {% elif d.verification_status == 'PENDING_VERIFICATION' %}
+                <span class="badge-status badge-booked">⏳ PENDING GOVT APPROVAL</span>
+                {% else %}
+                <span class="badge-status badge-cancelled">❌ REJECTED</span>
+                {% endif %}
+              </td>
+              <td style="padding: 12px;">
+                {% if d.leave_status %}
+                <span style="color: #dc2626; font-weight: 700;">On Emergency Leave</span>
+                {% else %}
+                <span style="color: #166534; font-weight: 600;">Active on Duty</span>
+                {% endif %}
+              </td>
+              <td style="padding: 12px; text-align: right;">
+                <button class="btn btn-sm btn-outline" onclick="toggleDoctorLeave({{ d.id }}, {% if d.leave_status %}false{% else %}true{% endif %})">
+                  {% if d.leave_status %}Mark On Duty{% else %}Set Emergency Leave{% endif %}
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: BED & RESOURCE MATRIX -->
+  <div id="tab-resources" style="display: none;">
+    <div class="vital-card" style="margin-bottom: 24px;">
+      <h3 style="font-size: 1.2rem; color: var(--primary-navy); margin-bottom: 16px;">Manage Bed Occupancy & Medical Resources</h3>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+        
+        <div style="background: #f8fafc; padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <h4 style="color: #0284c7; margin-bottom: 12px;">🛏️ General Ward Beds</h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600;">Total</label>
+              <input type="number" id="res-gen-total" class="form-control" value="{{ resource.general_beds_total }}">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600;">Occupied</label>
+              <input type="number" id="res-gen-occ" class="form-control" value="{{ resource.general_beds_occupied }}">
+            </div>
+          </div>
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Available: {{ resource.general_beds_available }}</div>
+        </div>
+
+        <div style="background: #fef2f2; padding: 18px; border-radius: var(--radius-md); border: 1px solid #fca5a5;">
+          <h4 style="color: #dc2626; margin-bottom: 12px;">🚨 ICU Beds</h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600;">Total</label>
+              <input type="number" id="res-icu-total" class="form-control" value="{{ resource.icu_beds_total }}">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600;">Occupied</label>
+              <input type="number" id="res-icu-occ" class="form-control" value="{{ resource.icu_beds_occupied }}">
+            </div>
+          </div>
+          <div style="font-size: 0.85rem; font-weight: 700; color: #dc2626;">Occupancy: {{ resource.icu_occupancy_pct }}%</div>
+        </div>
+
+        <div style="background: #f0fdf4; padding: 18px; border-radius: var(--radius-md); border: 1px solid #86efac;">
+          <h4 style="color: #166534; margin-bottom: 12px;">💨 Ventilator Beds</h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600;">Total</label>
+              <input type="number" id="res-vent-total" class="form-control" value="{{ resource.ventilator_beds_total }}">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600;">Occupied</label>
+              <input type="number" id="res-vent-occ" class="form-control" value="{{ resource.ventilator_beds_occupied }}">
+            </div>
+          </div>
+          <div style="font-size: 0.85rem; font-weight: 600; color: #166534;">Available: {{ resource.ventilator_beds_available }}</div>
+        </div>
+
+        <div style="background: #f0f9ff; padding: 18px; border-radius: var(--radius-md); border: 1px solid #7dd3fc;">
+          <h4 style="color: #0369a1; margin-bottom: 12px;">🫧 Oxygen Beds & Supply</h4>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600;">Total</label>
+              <input type="number" id="res-oxy-total" class="form-control" value="{{ resource.oxygen_beds_total }}">
+            </div>
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600;">Occupied</label>
+              <input type="number" id="res-oxy-occ" class="form-control" value="{{ resource.oxygen_beds_occupied }}">
+            </div>
+          </div>
+          <label style="font-size: 0.75rem; font-weight: 600;">Oxygen Supply Pressure Status</label>
+          <input type="text" id="res-oxy-status" class="form-control" value="{{ resource.oxygen_supply_status }}">
+        </div>
+
+      </div>
+
+      <div style="margin-top: 20px; text-align: right;">
+        <button class="btn btn-primary" style="background: #0284c7; border: none; padding: 10px 24px;" onclick="saveResources()">💾 Save Bed Occupancy Matrix</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: Add Doctor -->
+<div id="modal-add-doctor" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:90%; max-width:560px; padding:24px; border-radius:var(--radius-lg); box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0; color:var(--primary-navy);">Register Doctor to {{ hospital.name }}</h3>
+    <form id="form-add-doctor" onsubmit="submitAddDoctor(event)">
+      <div class="form-group">
+        <label>Full Doctor Name *</label>
+        <input type="text" id="doc-name" class="form-control" required placeholder="Dr. Rajesh Sharma">
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="form-group" style="flex:1;">
+          <label>Phone Number *</label>
+          <input type="text" id="doc-phone" class="form-control" required placeholder="9876543210">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Licensing Reg ID</label>
+          <input type="text" id="doc-reg" class="form-control" placeholder="MCI-2026-9874">
+        </div>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="form-group" style="flex:1;">
+          <label>Department / Specialty</label>
+          <select id="doc-dept" class="form-control">
+            <option value="General Medicine">General Medicine</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="Orthopedics">Orthopedics</option>
+            <option value="Neurology">Neurology</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>Consultation Fee (₹)</label>
+          <input type="number" id="doc-fee" class="form-control" value="0.00">
+        </div>
+      </div>
+      <div style="text-align:right; margin-top:20px;">
+        <button type="button" class="btn btn-outline" onclick="closeAddDoctorModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="background:#0284c7;">Register Doctor</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  function switchTab(tabId) {
+    ['tab-overview', 'tab-apts', 'tab-doctors', 'tab-depts', 'tab-queue', 'tab-resources', 'tab-reports'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = (id === tabId) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.hosp-tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (tabId === 'tab-apts') {
+      loadAppointments();
+    }
+  }
+
+  function loadAppointments() {
+    const dateFilter = document.getElementById('filter-date').value;
+    const status = document.getElementById('filter-status').value;
+    const docId = document.getElementById('filter-doctor').value;
+    const search = document.getElementById('filter-search').value;
+
+    fetch(`/api/hospital/appointments/?date_filter=${dateFilter}&status=${status}&doctor_id=${docId}&search=${encodeURIComponent(search)}`)
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.getElementById('apts-table-body');
+        if (!data.appointments || data.appointments.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No appointments found for selected filter.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.appointments.map(a => `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding:12px;">
+              <div style="font-weight:700; color:#0284c7;">${a.opd_token}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${a.booking_reference}</div>
+            </td>
+            <td style="padding:12px;">
+              <div style="font-weight:600;">${a.patient_name}</div>
+              <div style="font-size:0.78rem; color:var(--text-muted);">${a.patient_phone} | ABHA: ${a.patient_abha}</div>
+            </td>
+            <td style="padding:12px;">
+              <div>Dr. ${a.doctor_name}</div>
+              <div style="font-size:0.78rem; color:var(--text-muted);">${a.department}</div>
+            </td>
+            <td style="padding:12px;">
+              <div>${a.appointment_date}</div>
+              <div style="font-size:0.78rem; color:var(--text-muted);">${a.time_slot}</div>
+            </td>
+            <td style="padding:12px;">
+              <span class="badge-status badge-${a.status.toLowerCase()}">${a.status}</span>
+            </td>
+            <td style="padding:12px; text-align:right;">
+              <button class="btn btn-sm btn-outline" onclick="appointmentAction(${a.id}, 'complete')">✓ Complete</button>
+              <button class="btn btn-sm btn-outline" style="color:#dc2626;" onclick="appointmentAction(${a.id}, 'cancel')">Cancel</button>
+            </td>
+          </tr>
+        `).join('');
+      });
+  }
+
+  function appointmentAction(bookingId, action) {
+    fetch(`/api/hospital/appointments/${bookingId}/action/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: action })
+    }).then(res => res.json()).then(data => {
+      alert(data.message);
+      loadAppointments();
+    });
+  }
+
+  function openAddDoctorModal() {
+    document.getElementById('modal-add-doctor').style.display = 'flex';
+  }
+  function closeAddDoctorModal() {
+    document.getElementById('modal-add-doctor').style.display = 'none';
+  }
+
+  function submitAddDoctor(e) {
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById('doc-name').value,
+      phone: document.getElementById('doc-phone').value,
+      licensing_id: document.getElementById('doc-reg').value,
+      department: document.getElementById('doc-dept').value,
+      consultation_fee: document.getElementById('doc-fee').value
+    };
+    fetch('/api/hospital/doctors/add/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).then(res => res.json()).then(data => {
+      alert(data.message);
+      closeAddDoctorModal();
+      location.reload();
+    });
+  }
+
+  function saveResources() {
+    const payload = {
+      general_beds_total: document.getElementById('res-gen-total').value,
+      general_beds_occupied: document.getElementById('res-gen-occ').value,
+      icu_beds_total: document.getElementById('res-icu-total').value,
+      icu_beds_occupied: document.getElementById('res-icu-occ').value,
+      ventilator_beds_total: document.getElementById('res-vent-total').value,
+      ventilator_beds_occupied: document.getElementById('res-vent-occ').value,
+      oxygen_beds_total: document.getElementById('res-oxy-total').value,
+      oxygen_beds_occupied: document.getElementById('res-oxy-occ').value,
+      oxygen_supply_status: document.getElementById('res-oxy-status').value
+    };
+    fetch('/api/hospital/resources/update/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).then(res => res.json()).then(data => {
+      alert(data.message);
+      location.reload();
+    });
+  }
+
+  function exportReport(type) {
+    window.location.href = `/api/hospital/reports/export/?type=${type}`;
+  }
+
+  // Chart.js initialization
+  document.addEventListener('DOMContentLoaded', () => {
+    const ctxTrend = document.getElementById('chart-load-trend');
+    if (ctxTrend) {
+      new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            label: 'OPD Appointments',
+            data: [42, 58, 65, 50, 72, 80, 35],
+            borderColor: '#0284c7',
+            backgroundColor: 'rgba(2, 132, 199, 0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        }
+      });
+    }
+
+    const ctxDist = document.getElementById('chart-status-dist');
+    if (ctxDist) {
+      new Chart(ctxDist, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed', 'Pending', 'Cancelled', 'No-Show'],
+          datasets: [{
+            data: [{{ today_completed }}, {{ today_pending }}, {{ today_cancelled }}, {{ today_noshow }}],
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#94a3b8']
+          }]
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,1055 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctor OPD & Appointments Console | Government of India{% endblock %}
+
+{% block content %}
+<div class="dashboard-container" style="padding-bottom: 60px;">
+  
+  <!-- SLEEK TOP NAVIGATION BAR FOR DOCTOR PORTAL (SINGLE ROW NO WRAP) -->
+  <nav class="top-bar-2" style="background:#004d40; padding: 6px 14px; border-radius:10px; margin-bottom:22px; display:flex; gap:6px; flex-wrap:nowrap; overflow-x:auto; white-space:nowrap; align-items:center; box-shadow: 0 4px 14px rgba(0,77,64,0.15); scrollbar-width:thin;" aria-label="Doctor Console Navigation">
+    <div style="color:#ffffff; font-weight:800; font-size:1.05rem; margin-right:10px; display:flex; align-items:center; gap:6px; flex-shrink:0;">
+      <span>👨‍⚕️</span> {{ doctor.name }} <span style="font-size:0.75rem; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:12px; font-family:monospace;">{{ doctor.department }}</span>
+    </div>
+
+    <!-- Doctor Profile & Specialty Switcher -->
+    <form method="GET" action="{% url 'doctor_portal' %}" style="margin:0;">
+      <select name="doctor_id" onchange="this.form.submit();" style="padding:5px 12px; border-radius:20px; font-weight:700; font-size:0.8rem; border:1px solid rgba(255,255,255,0.4); background:rgba(255,255,255,0.15); color:#ffffff; cursor:pointer;" title="Switch Doctor Console View">
+        {% for d in all_doctors %}
+        <option value="{{ d.id }}" {% if d.id == doctor.id %}selected{% endif %} style="color:#000000;">
+          👨‍⚕️ {{ d.name }} ({{ d.department }})
+        </option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <button type="button" class="btn btn-doc-tab active" data-tab="today" style="font-weight:700; padding:8px 14px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:var(--accent-emerald); color:#ffffff; border:none; cursor:pointer;">
+      <span>📅</span> Today's OPD
+      <span class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; padding:2px 8px; border-radius:12px; font-size:0.75rem;">{{ stats.today_total }}</span>
+    </button>
+    <button type="button" class="btn btn-doc-tab" data-tab="previous" style="font-weight:700; padding:8px 14px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>📜</span> Appointment History
+      <span class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; padding:2px 8px; border-radius:12px; font-size:0.75rem;">{{ stats.previous_total }}</span>
+    </button>
+    <button type="button" class="btn btn-doc-tab" data-tab="all" style="font-weight:700; padding:8px 14px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>📋</span> All Appointments
+      <span class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; padding:2px 8px; border-radius:12px; font-size:0.75rem;">{{ stats.all_time_total }}</span>
+    </button>
+    <button type="button" class="btn btn-doc-tab" data-tab="analytics" style="font-weight:700; padding:8px 14px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>📊</span> Telemetry Trends
+    </button>
+    <button type="button" class="btn btn-doc-tab" data-tab="library" style="font-weight:700; padding:8px 14px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>📚</span> Medical Textbook Library
+    </button>
+
+    <!-- Role Switcher & Duty Toggle -->
+    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+      <button type="button" id="btn-doctor-duty-toggle" data-id="{{ doctor.id }}" data-present="{{ doctor.is_present_today|lower }}" style="padding:4px 12px; border-radius:20px; font-weight:700; font-size:0.78rem; border:none; cursor:pointer; {% if doctor.is_present_today %}background:#dcfce7; color:#15803d;{% else %}background:#fee2e2; color:#b91c1c;{% endif %}">
+        {% if doctor.is_present_today %}🟢 Present{% else %}🔴 Off Duty{% endif %}
+      </button>
+
+      <a href="{% url 'dashboard' %}" class="btn btn-sm" style="background:rgba(255,255,255,0.12); color:#ffffff; font-size:0.75rem; padding:4px 10px; border-radius:20px;">👤 Citizen</a>
+      <a href="{% url 'admin_portal' %}" class="btn btn-sm" style="background:rgba(255,255,255,0.12); color:#ffffff; font-size:0.75rem; padding:4px 10px; border-radius:20px;">🏛️ Admin</a>
+    </div>
+  </nav>
+
+  <!-- KPI Top Stats Cards -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+    
+    <div class="vital-card" style="border-left: 4px solid var(--accent-saffron); padding: 18px 20px;">
+      <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Today's Total OPD Bookings</div>
+      <div style="font-size:2rem; font-weight:800; color:var(--primary-navy); margin:4px 0;">{{ stats.today_total }}</div>
+      <div style="font-size:0.82rem; color:var(--text-muted);">Max daily quota: {{ stats.max_slots }}</div>
+    </div>
+
+    <div class="vital-card" style="border-left: 4px solid #f59e0b; padding: 18px 20px;">
+      <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Today Uncompleted / In Queue</div>
+      <div style="font-size:2rem; font-weight:800; color:#d97706; margin:4px 0;" id="kpi-today-pending">{{ stats.today_pending }}</div>
+      <div style="font-size:0.82rem; color:#d97706; font-weight:600;">⏳ Waiting for consultation</div>
+    </div>
+
+    <div class="vital-card" style="border-left: 4px solid var(--accent-emerald); padding: 18px 20px;">
+      <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Today Completed Consultations</div>
+      <div style="font-size:2rem; font-weight:800; color:var(--accent-emerald); margin:4px 0;" id="kpi-today-completed">{{ stats.today_completed }}</div>
+      <div style="font-size:0.82rem; color:var(--accent-emerald); font-weight:600;">✓ Successfully attended</div>
+    </div>
+
+    <div class="vital-card" style="border-left: 4px solid var(--primary-navy); padding: 18px 20px;">
+      <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Previous Consultations</div>
+      <div style="font-size:2rem; font-weight:800; color:var(--primary-navy); margin:4px 0;">{{ stats.previous_total }}</div>
+      <div style="font-size:0.82rem; color:var(--text-muted);">All-time attended: {{ stats.all_time_total }}</div>
+    </div>
+
+  </div>
+
+  <!-- TAB 1: TODAY'S APPOINTMENTS (COMPLETED & UNCOMPLETED) -->
+  <div class="doc-tab-pane active" id="pane-today">
+    
+    <!-- Quick Clinical Action Toolbar -->
+    <div style="background:#ffffff; border:1px solid var(--border-color); border-radius:12px; padding:16px; margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+      <div style="font-size:0.92rem; font-weight:700; color:var(--primary-navy); display:flex; align-items:center; gap:6px;">
+        <span>⚡</span> Quick Clinical Actions:
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-outline" onclick="openDocModal('modal-order-lab');" style="font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
+          <span>🧪</span> Order Lab Test
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="openDocModal('modal-discharge-summary');" style="font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
+          <span>📝</span> Generate Discharge Summary
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="openDocModal('modal-request-consent');" style="font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
+          <span>🛡️</span> Request EHR Consent
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="openDocModal('modal-log-vaccination');" style="font-weight:700; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
+          <span>💉</span> Log Vaccination
+        </button>
+      </div>
+    </div>
+
+    <!-- SUBSECTION 1A: UNCOMPLETED / PENDING IN QUEUE -->
+    <div class="vital-card" style="margin-bottom: 24px; padding: 22px; border-top: 4px solid #f59e0b;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h3 style="font-size:1.15rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>⏳</span> Today's OPD Token Queue Management
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Manage patient queue flow: Call Next, Start Consultation, or Mark No-Show.
+          </p>
+        </div>
+        <span class="vital-status-pill warning" style="font-size:0.82rem;">
+          {{ today_uncompleted.count }} Patients in Queue
+        </span>
+      </div>
+
+      <div id="uncompleted-list">
+        {% if today_uncompleted %}
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px;">
+          {% for apt in today_uncompleted %}
+          <div class="apt-ticket" id="apt-card-{{ apt.id }}" style="background:#fffbeb; border:1px solid #fde68a; border-radius:12px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <span style="font-size:1.2rem; font-weight:800; color:#b45309; background:#fef3c7; padding:2px 10px; border-radius:6px;">
+                Token #{{ apt.opd_token_number|default:apt.token_number }}
+              </span>
+              <span class="vital-status-pill {% if apt.status == 'IN_CONSULTATION' %}success{% elif apt.status == 'WAITING' or apt.status == 'CHECKED_IN' %}warning{% else %}secondary{% endif %}" style="font-size:0.75rem;" id="apt-status-badge-{{ apt.id }}">
+                {{ apt.get_status_display }}
+              </span>
+            </div>
+
+            <div style="font-size:1.05rem; font-weight:700; color:var(--primary-navy);">
+              👤 {{ apt.patient.get_display_name }}
+            </div>
+            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+              📱 {{ apt.patient.phone }} • Age: {{ apt.patient.age|default:"32" }} • {{ apt.patient.gender }} • Blood: {{ apt.patient.blood_group }}
+            </div>
+            
+            <div style="margin: 10px 0; background:#ffffff; padding:8px 10px; border-radius:8px; font-size:0.82rem;">
+              <div style="color:var(--text-muted);">🕒 Slot: <strong>{{ apt.time_slot }}</strong> | Room: <strong>{{ apt.consultation_room|default:"Room 102" }}</strong></div>
+              <div style="margin-top:4px; color:#b45309;"><strong>Symptoms:</strong> {{ apt.symptoms }}</div>
+            </div>
+
+            <!-- OPD Action Button Matrix -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px;">
+              <button type="button" class="btn btn-sm btn-outline btn-opd-action" data-id="{{ apt.id }}" data-action="call_next" style="font-size:0.78rem; font-weight:700; padding:6px;">
+                📢 Call Next
+              </button>
+              <button type="button" class="btn btn-sm btn-outline btn-opd-action" data-id="{{ apt.id }}" data-action="start_consultation" style="font-size:0.78rem; font-weight:700; padding:6px; color:#15803d; border-color:#86efac;">
+                🩺 Start Consult
+              </button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:6px;">
+              <button type="button" class="btn btn-emerald btn-attend-patient" data-id="{{ apt.id }}" data-name="{{ apt.patient.get_display_name }}" data-token="{{ apt.opd_token_number|default:apt.token_number }}" data-sym="{{ apt.symptoms }}" style="padding:8px 10px; font-weight:700; font-size:0.84rem; display:flex; align-items:center; justify-content:center; gap:4px;">
+                <span>✓</span> Complete
+              </button>
+              <button type="button" class="btn btn-sm btn-outline btn-opd-action" data-id="{{ apt.id }}" data-action="mark_no_show" style="font-size:0.78rem; font-weight:700; color:#dc2626; border-color:#fca5a5; padding:8px 6px;">
+                ❌ No-Show
+              </button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:30px; color:var(--text-muted); background:#f8fafc; border-radius:10px;">
+          <div style="font-size:2rem; margin-bottom:8px;">🎉</div>
+          <h4>No pending appointments in queue for today!</h4>
+          <p style="font-size:0.85rem;">All scheduled patients have been attended.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- SUBSECTION 1B: COMPLETED APPOINTMENTS TODAY -->
+    <div class="vital-card" style="padding: 22px; border-top: 4px solid var(--accent-emerald);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h3 style="font-size:1.15rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>✓</span> Today's Completed Consultations
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Patients attended by you today until present time.
+          </p>
+        </div>
+        <span class="vital-status-pill success" style="font-size:0.82rem;" id="badge-completed-today-count">
+          {{ today_completed.count }} Completed Today
+        </span>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.88rem;" id="table-completed-today">
+          <thead>
+            <tr style="background:#f0fdf4; text-align:left; font-size:0.8rem; color:#166534; text-transform:uppercase; border-bottom:2px solid #bbf7d0;">
+              <th style="padding:10px;">Token</th>
+              <th style="padding:10px;">Patient Name</th>
+              <th style="padding:10px;">Time Slot</th>
+              <th style="padding:10px;">Symptoms</th>
+              <th style="padding:10px;">Clinical Observations / Diagnosis</th>
+              <th style="padding:10px; text-align:center;">Completed At</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-completed-today">
+            {% for c in today_completed %}
+            <tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:12px 10px; font-weight:800; color:#15803d;">#{{ c.token_number }}</td>
+              <td style="padding:12px 10px; font-weight:700; color:var(--primary-navy);">{{ c.patient.get_display_name }}<br><span style="font-size:0.75rem; color:var(--text-muted);">{{ c.patient.phone }}</span></td>
+              <td style="padding:12px 10px; font-size:0.82rem;">{{ c.time_slot }}</td>
+              <td style="padding:12px 10px; font-size:0.82rem; color:var(--text-muted);">{{ c.symptoms }}</td>
+              <td style="padding:12px 10px; font-size:0.85rem; color:#1e293b;">{{ c.consultation_notes|default:"Routine consultation completed." }}</td>
+              <td style="padding:12px 10px; text-align:center; font-size:0.82rem; font-weight:600; color:var(--accent-emerald);">
+                {{ c.completed_at|date:"h:i A"|default:"Today" }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr id="row-empty-completed">
+              <td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">
+                No consultations marked completed yet today.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: APPOINTMENT HISTORY (WITH PROGRESS GRAPH & MULTI-FILTERS) -->
+  <div class="doc-tab-pane" id="pane-previous" style="display:none;">
+    
+    <!-- DOCTOR APPOINTMENT PROGRESS GRAPH (TODAY, YESTERDAY, WEEKLY, MONTHLY, YEAR, CUSTOM) -->
+    <div class="vital-card" style="padding: 22px; margin-bottom: 24px; border-top: 4px solid var(--accent-emerald);">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+        <div>
+          <h3 style="font-size:1.2rem; color:var(--primary-navy); font-weight:800; display:flex; align-items:center; gap:8px;">
+            <span>📈</span> Doctor Appointment Progress Telemetry
+          </h3>
+          <p style="font-size:0.84rem; color:var(--text-muted); margin-top:2px;">
+            Track your appointment completion rate, patient load, and clinical progress over time.
+          </p>
+        </div>
+
+        <!-- Progress Graph Filter Timeframe Buttons -->
+        <div style="display:flex; gap:6px; flex-wrap:wrap; background:#f1f5f9; padding:4px; border-radius:10px;" id="doc-history-timeframe-btns">
+          <button type="button" class="btn btn-sm btn-doc-hist-tf" data-tf="today" style="font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:6px; border:none; background:#ffffff; color:#004d40; cursor:pointer;">
+            Today
+          </button>
+          <button type="button" class="btn btn-sm btn-doc-hist-tf" data-tf="yesterday" style="font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:6px; border:none; background:#ffffff; color:#004d40; cursor:pointer;">
+            Yesterday
+          </button>
+          <button type="button" class="btn btn-sm btn-doc-hist-tf active" data-tf="weekly" style="font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:6px; border:none; background:#004d40; color:#ffffff; cursor:pointer;">
+            Weekly
+          </button>
+          <button type="button" class="btn btn-sm btn-doc-hist-tf" data-tf="monthly" style="font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:6px; border:none; background:#ffffff; color:#004d40; cursor:pointer;">
+            Monthly
+          </button>
+          <button type="button" class="btn btn-sm btn-doc-hist-tf" data-tf="year" style="font-size:0.78rem; font-weight:700; padding:5px 12px; border-radius:6px; border:none; background:#ffffff; color:#004d40; cursor:pointer;">
+            Year
+          </button>
+        </div>
+      </div>
+
+      <div style="position:relative; height:240px;">
+        <canvas id="doc-history-telemetry-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- PATIENT APPOINTMENT HISTORY TABLE & MULTI-FILTER BAR -->
+    <div class="vital-card" style="padding: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h3 style="font-size:1.2rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>📜</span> Patient Appointment History & Previous Consultations
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Filter consultations by <strong>Date, Time Slot, Status (Completed/Uncompleted), and Search Keywords</strong>.
+          </p>
+        </div>
+      </div>
+
+      <!-- MULTI-FILTER CONTROLS BAR -->
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; margin-bottom:20px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; align-items:center;">
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--primary-navy); display:block; margin-bottom:4px;">🔍 Keyword / Patient Search</label>
+          <input type="text" id="doc-history-search" placeholder="Patient name, phone, notes..." class="form-control" style="font-size:0.82rem; padding:6px 10px;">
+        </div>
+
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--primary-navy); display:block; margin-bottom:4px;">📅 Particular Date</label>
+          <input type="date" id="doc-history-date-filter" class="form-control" style="font-size:0.82rem; padding:6px 10px;">
+        </div>
+
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--primary-navy); display:block; margin-bottom:4px;">🕒 Time Slot Filter</label>
+          <select id="doc-history-slot-filter" class="form-select" style="font-size:0.82rem; padding:6px 10px;">
+            <option value="all">All Time Slots</option>
+            <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM</option>
+            <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+            <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+            <option value="12:00 PM - 01:00 PM">12:00 PM - 01:00 PM</option>
+            <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
+            <option value="03:00 PM - 04:00 PM">03:00 PM - 04:00 PM</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--primary-navy); display:block; margin-bottom:4px;">✅ Status Filter</label>
+          <select id="doc-history-status-filter" class="form-select" style="font-size:0.82rem; padding:6px 10px;">
+            <option value="all">All Statuses</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CONFIRMED">In Queue / Uncompleted</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+
+        <div style="display:flex; align-items:flex-end; gap:6px; height:100%; margin-top:auto;">
+          <button type="button" id="btn-reset-history-filters" class="btn btn-sm" style="background:#e2e8f0; color:#334155; font-size:0.78rem; font-weight:700; width:100%; padding:8px;">
+            🔄 Reset Filters
+          </button>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.88rem;" id="doc-history-table">
+          <thead>
+            <tr style="background:#f8fafc; text-align:left; font-size:0.8rem; color:var(--primary-navy); text-transform:uppercase; border-bottom:2px solid #e2e8f0;">
+              <th style="padding:10px;">Date</th>
+              <th style="padding:10px;">Token</th>
+              <th style="padding:10px;">Patient</th>
+              <th style="padding:10px;">Time Slot</th>
+              <th style="padding:10px;">Clinical Diagnosis & Notes</th>
+              <th style="padding:10px; text-align:center;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in previous_appointments %}
+            <tr style="border-bottom:1px solid #f1f5f9;" data-date="{{ p.appointment_date|date:'Y-m-d' }}" data-slot="{{ p.time_slot }}" data-status="{{ p.status }}">
+              <td style="padding:12px 10px; font-weight:700; color:var(--primary-navy);">{{ p.appointment_date|date:"d-M-Y" }}</td>
+              <td style="padding:12px 10px; font-weight:800; color:#0369a1;">#{{ p.token_number }}</td>
+              <td style="padding:12px 10px;"><strong>{{ p.patient.get_display_name }}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">{{ p.patient.phone }}</span></td>
+              <td style="padding:12px 10px; font-size:0.82rem;">{{ p.time_slot }}</td>
+              <td style="padding:12px 10px; font-size:0.85rem; color:#334155;">{{ p.consultation_notes|default:"OPD checkup completed." }}</td>
+              <td style="padding:12px 10px; text-align:center;">
+                <span class="vital-status-pill {% if p.status == 'COMPLETED' %}success{% elif p.status == 'CONFIRMED' %}warning{% else %}danger{% endif %}" style="font-size:0.75rem;">
+                  {{ p.get_status_display }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted);">
+                No previous appointment records found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: ALL APPOINTMENTS -->
+  <div class="doc-tab-pane" id="pane-all" style="display:none;">
+    <div class="vital-card" style="padding: 24px;">
+      <h3 style="font-size:1.15rem; color:var(--primary-navy); font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+        <span>📋</span> Master Log of All Appointments
+      </h3>
+
+      <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+          <thead>
+            <tr style="background:#f8fafc; text-align:left; font-size:0.8rem; color:var(--primary-navy); text-transform:uppercase; border-bottom:2px solid #e2e8f0;">
+              <th style="padding:10px;">Booking Ref</th>
+              <th style="padding:10px;">Date & Slot</th>
+              <th style="padding:10px;">Patient</th>
+              <th style="padding:10px; text-align:center;">Token</th>
+              <th style="padding:10px;">Symptoms / Notes</th>
+              <th style="padding:10px; text-align:center;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in all_appointments %}
+            <tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:10px; font-family:monospace; font-weight:700; color:var(--primary-navy);">{{ a.booking_reference }}</td>
+              <td style="padding:10px; font-size:0.85rem;"><strong>{{ a.appointment_date|date:"d-M-Y" }}</strong><br>{{ a.time_slot }}</td>
+              <td style="padding:10px; font-weight:600;">{{ a.patient.get_display_name }}<br><span style="font-size:0.75rem; color:var(--text-muted);">{{ a.patient.phone }}</span></td>
+              <td style="padding:10px; text-align:center; font-weight:800; color:#e63946;">#{{ a.token_number }}</td>
+              <td style="padding:10px; font-size:0.82rem; color:var(--text-muted);">{{ a.consultation_notes|default:a.symptoms }}</td>
+              <td style="padding:10px; text-align:center;">
+                <span class="vital-status-pill {% if a.status == 'COMPLETED' %}success{% elif a.status == 'CONFIRMED' %}warning{% else %}danger{% endif %}" style="font-size:0.75rem;">
+                  {{ a.get_status_display }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: DOCTOR PATIENT TELEMETRY ANALYTICS (YEAR / MONTH / WEEK / DAY) -->
+  <div class="doc-tab-pane" id="pane-analytics" style="display:none;">
+    <div class="vital-card" style="padding: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0;">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>📊</span> {{ doctor.name }} — Patient Load & Appointments Telemetry
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Analytical breakdown of patient consultations for <strong>{{ doctor.department }}</strong>. Filter volume by <strong>Year, Month, Week, or Day</strong>.
+          </p>
+        </div>
+
+        <!-- Timeframe Buttons for Doctor Chart -->
+        <div style="display:flex; gap:6px; background:#f1f5f9; padding:4px; border-radius:10px;" id="doc-chart-timeframe-btns">
+          <button type="button" class="btn btn-sm btn-doc-timeframe" data-period="year" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:8px; border:none; background:#ffffff; color:#004d40; cursor:pointer;">
+            📅 Year
+          </button>
+          <button type="button" class="btn btn-sm btn-doc-timeframe active" data-period="month" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:8px; border:none; background:#004d40; color:#ffffff; cursor:pointer;">
+            🗓️ Month
+          </button>
+          <button type="button" class="btn btn-sm btn-doc-timeframe" data-period="week" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:8px; border:none; background:#ffffff; color:#004d40; cursor:pointer;">
+            📆 Week
+          </button>
+          <button type="button" class="btn btn-sm btn-doc-timeframe" data-period="day" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:8px; border:none; background:#ffffff; color:#004d40; cursor:pointer;">
+            🕒 Day
+          </button>
+        </div>
+      </div>
+
+      <div style="position:relative; height:340px;">
+        <canvas id="doc-telemetry-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: MEDICAL LEARNING LIBRARY & CONTINUOUS MEDICAL EDUCATION -->
+  <div class="doc-tab-pane" id="pane-library" style="display:none;">
+    
+    <!-- Library Header -->
+    <div style="background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #0f766e 100%); color: #ffffff; padding: 22px 26px; border-radius: 12px; margin-bottom: 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+      <div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.6rem;">📚</span>
+          <h3 style="font-size:1.35rem; font-weight:800; margin:0; letter-spacing:-0.3px;">
+            National Medical Knowledge & Clinical Learning Library
+          </h3>
+          <span class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; font-size:0.75rem; font-weight:700;">ICMR • WHO • AIIMS Protocols</span>
+        </div>
+        <p style="color:#a7f3d0; font-size:0.85rem; margin:6px 0 0 0;">
+          Specialization-wise clinical treatment guidelines, evidence-based algorithms, interactive case studies, and rapid diagnostic calculators for practicing physicians.
+        </p>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="badge" style="background:#ecfdf5; color:#065f46; font-size:0.8rem; font-weight:700; padding:6px 12px; border-radius:20px;">
+          📖 35+ Standard Protocols Active
+        </span>
+      </div>
+    </div>
+
+    <!-- Search & Specialization Filter Bar -->
+    <div class="vital-card" style="padding: 16px 20px; margin-bottom: 22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 12px;">
+        <div style="position:relative; flex:1; min-width:280px; max-width:480px;">
+          <input type="text" id="library-search-input" class="form-control" placeholder="Search guidelines, diseases, drugs, ECGs, protocols..." style="padding-left:36px; font-size:0.88rem;">
+          <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:1rem; opacity:0.6;">🔍</span>
+        </div>
+        <div style="font-size:0.82rem; color:var(--text-muted);">
+          Filter by Medical Discipline:
+        </div>
+      </div>
+
+      <!-- Specialty Category Pills -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap;" id="library-category-pills">
+        <button type="button" class="btn btn-sm btn-lib-filter active" data-cat="all" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#065f46; color:#ffffff; border:none; cursor:pointer;">
+          🌐 All Disciplines
+        </button>
+        <button type="button" class="btn btn-sm btn-lib-filter" data-cat="cardiology" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;">
+          ❤️ Cardiology
+        </button>
+        <button type="button" class="btn btn-sm btn-lib-filter" data-cat="pulmonology" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;">
+          🫁 Pulmonology (O2/Resp)
+        </button>
+        <button type="button" class="btn btn-sm btn-lib-filter" data-cat="endocrinology" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;">
+          🩸 Endocrinology & Diabetes
+        </button>
+        <button type="button" class="btn btn-sm btn-lib-filter" data-cat="nephrology" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;">
+          🫘 Nephrology & Renal
+        </button>
+        <button type="button" class="btn btn-sm btn-lib-filter" data-cat="pediatrics" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;">
+          👶 Pediatrics
+        </button>
+        <button type="button" class="btn btn-sm btn-lib-filter" data-cat="orthopedics" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;">
+          🦴 Orthopedics
+        </button>
+        <button type="button" class="btn btn-sm btn-lib-filter" data-cat="emergency" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;">
+          🚨 Emergency & Critical Care
+        </button>
+        <button type="button" class="btn btn-sm btn-lib-filter" data-cat="pharmacology" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;">
+          💊 Clinical Pharmacology
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN LIBRARY GRID: CLINICAL MODULES & GUIDELINES -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-bottom: 30px;" id="library-cards-container">
+      
+      <!-- Card 1: Cardiology -->
+      <div class="library-card" data-cat="cardiology" data-keywords="stemi ecg troponin chest pain hypertension mi infarction beta blocker aspirin" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-top:4px solid #ef4444; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="badge" style="background:#fee2e2; color:#b91c1c; font-weight:700; font-size:0.75rem;">❤️ CARDIOLOGY</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">ICMR Standard Protocol</span>
+          </div>
+          <h4 style="font-size:1.1rem; color:var(--primary-navy); margin:4px 0 8px 0; font-weight:800;">
+            Acute Coronary Syndrome & STEMI Emergency Management
+          </h4>
+          <p style="font-size:0.84rem; color:#475569; line-height:1.5;">
+            Step-by-step guideline for hyperacute T-waves, ST-segment elevation, MONA protocol (Morphine, Oxygen if SpO2 &lt; 90%, Nitrates, Aspirin 300mg + Clopidogrel 300mg loading dose), and door-to-needle thrombolysis timing.
+          </p>
+          <div style="background:#fef2f2; padding:10px; border-radius:8px; font-size:0.8rem; color:#991b1b; margin-top:10px;">
+            <strong>⚡ Clinical Pearl:</strong> Avoid nitrates if right ventricular infarction suspected (leads V3R, V4R) or systolic BP &lt; 90 mmHg.
+          </div>
+        </div>
+        <div style="margin-top:16px; pt:12px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:#64748b;">Difficulty: Intermediate</span>
+          <button type="button" class="btn btn-sm btn-outline btn-open-case" data-case="cardio-stemi" style="color:#b91c1c; border-color:#fca5a5; font-size:0.78rem; font-weight:700;">
+            🔍 Open Case Study
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 2: Pulmonology -->
+      <div class="library-card" data-cat="pulmonology" data-keywords="asthma copd spo2 oxygen hypoxia bronchodilator nebulization steroids respiratory" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-top:4px solid #0284c7; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700; font-size:0.75rem;">🫁 PULMONOLOGY</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">GOLD & GINA Guidelines</span>
+          </div>
+          <h4 style="font-size:1.1rem; color:var(--primary-navy); margin:4px 0 8px 0; font-weight:800;">
+            COPD Exacerbation & Hypoxia Titration Algorithm
+          </h4>
+          <p style="font-size:0.84rem; color:#475569; line-height:1.5;">
+            Target SpO2 titration: 88-92% in CO2 retainers (prevent loss of hypoxic drive). Salbutamol + Ipratropium nebulization, systemic corticosteroids (Prednisolone 40mg for 5 days), and non-invasive ventilation (BiPAP) indications.
+          </p>
+          <div style="background:#f0f9ff; padding:10px; border-radius:8px; font-size:0.8rem; color:#0369a1; margin-top:10px;">
+            <strong>⚡ Clinical Pearl:</strong> In severe COPD, high-flow 100% O2 can worsen hypercapnia due to Haldane effect and V/Q mismatch.
+          </div>
+        </div>
+        <div style="margin-top:16px; pt:12px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:#64748b;">Difficulty: Essential</span>
+          <button type="button" class="btn btn-sm btn-outline btn-open-case" data-case="pulm-copd" style="color:#0284c7; border-color:#bae6fd; font-size:0.78rem; font-weight:700;">
+            🔍 Open Case Study
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 3: Endocrinology -->
+      <div class="library-card" data-cat="endocrinology" data-keywords="diabetes sugar metformin insulin hba1c dka hypoglycemia sglt2 glp1 glycemic" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-top:4px solid #f59e0b; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="badge" style="background:#fef3c7; color:#b45309; font-weight:700; font-size:0.75rem;">🩸 ENDOCRINOLOGY</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">ADA / RSSDI India</span>
+          </div>
+          <h4 style="font-size:1.1rem; color:var(--primary-navy); margin:4px 0 8px 0; font-weight:800;">
+            Type 2 Diabetes Glycemic Control & SGLT2i / GLP-1 Algorithm
+          </h4>
+          <p style="font-size:0.84rem; color:#475569; line-height:1.5;">
+            First-line Metformin titration. In patients with established ASCVD or CKD (eGFR &gt; 20), add Empagliflozin/Dapagliflozin early for cardio-renal protection. Hypoglycemia rule of 15 (15g simple carbs, re-check in 15 mins).
+          </p>
+          <div style="background:#fffbeb; padding:10px; border-radius:8px; font-size:0.8rem; color:#b45309; margin-top:10px;">
+            <strong>⚡ Clinical Pearl:</strong> Hold SGLT2 inhibitors 48 hours prior to scheduled major surgery to mitigate euglycemic DKA risk.
+          </div>
+        </div>
+        <div style="margin-top:16px; pt:12px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:#64748b;">Difficulty: Daily Practice</span>
+          <button type="button" class="btn btn-sm btn-outline btn-open-case" data-case="endo-diabetes" style="color:#d97706; border-color:#fde68a; font-size:0.78rem; font-weight:700;">
+            🔍 Open Case Study
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 4: Nephrology -->
+      <div class="library-card" data-cat="nephrology" data-keywords="kidney egfr creatinine aki ckd kdigo potassium hyperkalemia dialysis" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-top:4px solid #6366f1; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="badge" style="background:#e0e7ff; color:#4338ca; font-weight:700; font-size:0.75rem;">🫘 NEPHROLOGY</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">KDIGO 2024 Guidelines</span>
+          </div>
+          <h4 style="font-size:1.1rem; color:var(--primary-navy); margin:4px 0 8px 0; font-weight:800;">
+            Acute Kidney Injury (AKI) Staging & Hyperkalemia Emergency
+          </h4>
+          <p style="font-size:0.84rem; color:#475569; line-height:1.5;">
+            KDIGO Stage 1 to 3 based on serum creatinine rise &amp; urine output. Urgent Hyperkalemia cocktail (K+ &gt; 6.5 mEq/L): 10ml Calcium Gluconate 10% IV (cardioprotection) + 10 units Regular Insulin in 50ml 50% Dextrose + Salbutamol nebs.
+          </p>
+          <div style="background:#eef2ff; padding:10px; border-radius:8px; font-size:0.8rem; color:#3730a3; margin-top:10px;">
+            <strong>⚡ Clinical Pearl:</strong> Calcium gluconate stabilizes cardiac myocytes immediately but does NOT lower serum potassium; insulin-glucose shifts K+ into cells within 15-30 min.
+          </div>
+        </div>
+        <div style="margin-top:16px; pt:12px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:#64748b;">Difficulty: Advanced</span>
+          <button type="button" class="btn btn-sm btn-outline btn-open-case" data-case="nephro-aki" style="color:#4f46e5; border-color:#c7d2fe; font-size:0.78rem; font-weight:700;">
+            🔍 Open Case Study
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 5: Pediatrics -->
+      <div class="library-card" data-cat="pediatrics" data-keywords="pediatric child fever dosage immunization vaccine dehydration orsaline weight" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-top:4px solid #ec4899; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="badge" style="background:#fce7f3; color:#9d174d; font-weight:700; font-size:0.75rem;">👶 PEDIATRICS</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">IAP National Immunization</span>
+          </div>
+          <h4 style="font-size:1.1rem; color:var(--primary-navy); margin:4px 0 8px 0; font-weight:800;">
+            Pediatric Febrile Illness & Acute Dehydration (WHO Plan A/B/C)
+          </h4>
+          <p style="font-size:0.84rem; color:#475569; line-height:1.5;">
+            Weight-based paracetamol (15 mg/kg every 4-6h, max 60 mg/kg/day). WHO low-osmolarity ORS rehydration protocol: 75 ml/kg over 4 hours for moderate dehydration. Avoid aspirin in children due to Reye Syndrome risk.
+          </p>
+          <div style="background:#fdf2f8; padding:10px; border-radius:8px; font-size:0.8rem; color:#9d174d; margin-top:10px;">
+            <strong>⚡ Clinical Pearl:</strong> In neonates (&lt; 28 days) with temperature &gt; 38°C (100.4°F), full sepsis workup and hospitalization is mandatory even if appearing well.
+          </div>
+        </div>
+        <div style="margin-top:16px; pt:12px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:#64748b;">Difficulty: Essential</span>
+          <button type="button" class="btn btn-sm btn-outline btn-open-case" data-case="peds-fever" style="color:#db2777; border-color:#fbcfe8; font-size:0.78rem; font-weight:700;">
+            🔍 Open Case Study
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 6: Emergency & Critical Care -->
+      <div class="library-card" data-cat="emergency" data-keywords="emergency resuscitation acls bls cpr anaphylaxis adrenaline shock epinephrine" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-top:4px solid #dc2626; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="badge" style="background:#fee2e2; color:#b91c1c; font-weight:700; font-size:0.75rem;">🚨 EMERGENCY CARE</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">AHA / ERC ACLS 2025</span>
+          </div>
+          <h4 style="font-size:1.1rem; color:var(--primary-navy); margin:4px 0 8px 0; font-weight:800;">
+            Anaphylaxis & Shock Resuscitation Protocol
+          </h4>
+          <p style="font-size:0.84rem; color:#475569; line-height:1.5;">
+            First-line drug is <strong>Intramuscular Adrenaline (Epinephrine) 1:1000</strong> (0.5mg for adults, 0.01mg/kg for pediatrics) into anterolateral mid-thigh. Never delay epinephrine for antihistamines or steroids. Rapid IV crystalloid bolus 20ml/kg.
+          </p>
+          <div style="background:#fef2f2; padding:10px; border-radius:8px; font-size:0.8rem; color:#991b1b; margin-top:10px;">
+            <strong>⚡ Clinical Pearl:</strong> Subcutaneous absorption of adrenaline is erratic in shock; the vascularity of vastus lateralis (mid-thigh IM) ensures rapid peak plasma levels.
+          </div>
+        </div>
+        <div style="margin-top:16px; pt:12px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:#64748b;">Difficulty: Critical Lifesaving</span>
+          <button type="button" class="btn btn-sm btn-outline btn-open-case" data-case="emer-anaphylaxis" style="color:#dc2626; border-color:#fca5a5; font-size:0.78rem; font-weight:700;">
+            🔍 Open Case Study
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 7: Clinical Pharmacology -->
+      <div class="library-card" data-cat="pharmacology" data-keywords="pharmacology antibiotic stewardship cyp450 interaction nsaid anticoagulation" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.03); border-top:4px solid #10b981; display:flex; flex-direction:column; justify-content:space-between;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span class="badge" style="background:#d1fae5; color:#065f46; font-weight:700; font-size:0.75rem;">💊 CLINICAL PHARMACOLOGY</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">National List of Essential Medicines (NLEM)</span>
+          </div>
+          <h4 style="font-size:1.1rem; color:var(--primary-navy); margin:4px 0 8px 0; font-weight:800;">
+            Antibiotic Stewardship (AWaRe Classification) & Critical Drug Interactions
+          </h4>
+          <p style="font-size:0.84rem; color:#475569; line-height:1.5;">
+            WHO Access, Watch, Reserve antimicrobial guidance to prevent Superbug AMR. Major clinical interactions: Clarithromycin/Erythromycin + Statins (Rhabdomyolysis risk), ACE inhibitors + Spironolactone (Severe Hyperkalemia).
+          </p>
+          <div style="background:#ecfdf5; padding:10px; border-radius:8px; font-size:0.8rem; color:#065f46; margin-top:10px;">
+            <strong>⚡ Clinical Pearl:</strong> Always verify GFR clearance prior to dosing Amoxicillin-Clavulanate, Fluoroquinolones, and Gabapentinoids in elderly patients.
+          </div>
+        </div>
+        <div style="margin-top:16px; pt:12px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.75rem; color:#64748b;">Difficulty: All Specialties</span>
+          <button type="button" class="btn btn-sm btn-outline btn-open-case" data-case="pharm-interactions" style="color:#059669; border-color:#a7f3d0; font-size:0.78rem; font-weight:700;">
+            🔍 Open Case Study
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CLINICAL CALCULATORS SECTION -->
+    <div class="vital-card" style="padding: 24px; margin-bottom: 24px;">
+      <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; margin-bottom: 18px; display:flex; align-items:center; gap:8px;">
+        <span>🧮</span> Rapid Clinical Diagnostic Calculators
+      </h3>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+        
+        <!-- Calculator 1: eGFR (CKD-EPI Formula) -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+          <h4 style="font-size:0.95rem; color:var(--primary-navy); font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+            <span>🫘</span> eGFR Renal Clearance (CKD-EPI)
+          </h4>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Creatinine (mg/dL)</label>
+              <input type="number" step="0.1" id="calc-creat" class="form-control" value="1.1" style="font-size:0.85rem; padding:6px 10px;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Age (Years)</label>
+              <input type="number" id="calc-age" class="form-control" value="52" style="font-size:0.85rem; padding:6px 10px;">
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Gender</label>
+            <select id="calc-gender" class="form-select" style="font-size:0.85rem; padding:6px 10px;">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" id="btn-calc-egfr" style="width:100%; font-size:0.82rem; font-weight:700;">
+            Calculate eGFR
+          </button>
+          <div id="result-egfr" style="margin-top:10px; padding:8px 10px; background:#ffffff; border-radius:6px; font-size:0.85rem; text-align:center; font-weight:700; color:var(--primary-navy); border:1px solid #cbd5e1;">
+            eGFR: <strong>78.4 mL/min/1.73m²</strong> (CKD Stage G2 - Mildly Decreased)
+          </div>
+        </div>
+
+        <!-- Calculator 2: Mean Arterial Pressure (MAP) -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+          <h4 style="font-size:0.95rem; color:var(--primary-navy); font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+            <span>❤️</span> Mean Arterial Pressure (MAP)
+          </h4>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Systolic BP (mmHg)</label>
+              <input type="number" id="calc-sys" class="form-control" value="120" style="font-size:0.85rem; padding:6px 10px;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Diastolic BP (mmHg)</label>
+              <input type="number" id="calc-dia" class="form-control" value="80" style="font-size:0.85rem; padding:6px 10px;">
+            </div>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+            Target organ perfusion adequate if MAP &ge; 65 mmHg.
+          </div>
+          <button type="button" class="btn btn-sm btn-emerald" id="btn-calc-map" style="width:100%; font-size:0.82rem; font-weight:700;">
+            Calculate MAP
+          </button>
+          <div id="result-map" style="margin-top:10px; padding:8px 10px; background:#ffffff; border-radius:6px; font-size:0.85rem; text-align:center; font-weight:700; color:#15803d; border:1px solid #cbd5e1;">
+            MAP: <strong>93.3 mmHg</strong> (Normal Adequate Perfusion)
+          </div>
+        </div>
+
+        <!-- Calculator 3: Pediatric Amoxicillin Dosing -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+          <h4 style="font-size:0.95rem; color:var(--primary-navy); font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+            <span>👶</span> Pediatric Amoxicillin Dosing
+          </h4>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Child Weight (kg)</label>
+              <input type="number" id="calc-peds-weight" class="form-control" value="14" style="font-size:0.85rem; padding:6px 10px;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Dosing Regimen</label>
+              <select id="calc-peds-regimen" class="form-select" style="font-size:0.85rem; padding:6px 10px;">
+                <option value="45">Standard (45 mg/kg/day)</option>
+                <option value="90">High-dose Otitis (90 mg/kg/day)</option>
+              </select>
+            </div>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">
+            Syrup formulation concentration: 250mg / 5mL
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" id="btn-calc-peds" style="width:100%; font-size:0.82rem; font-weight:700; background:#db2777; border-color:#db2777;">
+            Calculate Dose (mL)
+          </button>
+          <div id="result-peds" style="margin-top:10px; padding:8px 10px; background:#ffffff; border-radius:6px; font-size:0.85rem; text-align:center; font-weight:700; color:#9d174d; border:1px solid #cbd5e1;">
+            Dose: <strong>6.3 mL (315 mg) Twice Daily (BID)</strong>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- ==================== MODAL: CLINICAL CASE STUDY VIEWER ==================== -->
+<div class="modal-backdrop" id="modal-case-study">
+  <div class="modal-card" style="max-width:720px; max-height:85vh; overflow-y:auto;">
+    <div class="modal-header">
+      <h3 id="case-study-title" style="display:flex; align-items:center; gap:8px;"><span>📖</span> Clinical Case Presentation</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-case-study').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body" id="case-study-body">
+      <!-- Injected dynamically via JS -->
+    </div>
+  </div>
+</div>
+<!-- ==================== MODAL: ATTEND & COMPLETE CONSULTATION ==================== -->
+<div class="modal-backdrop" id="modal-attend-consultation">
+  <div class="modal-card" style="max-width:620px;">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span>🩺</span> Consultation & Clinical Notes</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-attend-consultation').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-attend-consultation" onsubmit="event.preventDefault();">
+        <input type="hidden" id="attend-booking-id">
+
+        <div style="background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:14px; border:1px solid #e2e8f0;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong id="attend-patient-name" style="color:var(--primary-navy); font-size:1.05rem;">Patient Name</strong>
+              <div id="attend-symptoms-text" style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Symptoms: ...</div>
+            </div>
+            <span id="attend-token-badge" class="brand-badge" style="font-size:1rem; font-weight:800; background:var(--accent-emerald); color:#ffffff;">Token #0</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Clinical Observations & Diagnosis *</label>
+          <textarea id="attend-notes" class="form-control" rows="3" placeholder="Enter clinical diagnosis, advice, and findings..." required>Vitals reviewed and within standard parameters. Advised maintaining healthy hydration, regular diet, and follow-up on discomfort.</textarea>
+        </div>
+
+        <div style="border-top:1px solid #e2e8f0; padding-top:12px; margin-top:12px;">
+          <h4 style="font-size:0.95rem; color:var(--primary-navy); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+            <span>💊</span> Issue Digital Prescription (Optional)
+          </h4>
+          
+          <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Medicine Name</label>
+              <input type="text" id="attend-med-name" class="form-control" placeholder="e.g. Tab. Paracetamol 650mg">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Dosage & Frequency</label>
+              <input type="text" id="attend-med-dosage" class="form-control" placeholder="e.g. 1 Tablet Twice Daily" value="1 Tablet Daily">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-submit-consultation" class="btn btn-emerald" style="width:100%; padding:12px; font-weight:700; font-size:1rem; margin-top:14px;">
+          ✓ Complete Consultation & Update OPD Queue
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: ORDER LAB INVESTIGATION ==================== -->
+<div class="modal-backdrop" id="modal-order-lab">
+  <div class="modal-card" style="max-width:580px;">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span>🧪</span> Order Diagnostic Lab Investigation</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-order-lab').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-order-lab" onsubmit="event.preventDefault(); submitDoctorLabOrder();">
+        <div class="form-group">
+          <label class="form-label">Patient Aadhaar / Phone Number *</label>
+          <input type="text" id="lab-patient-query" class="form-control" placeholder="Enter patient 12-digit Aadhaar or 10-digit Phone" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Select Lab Test from Catalog *</label>
+          <select id="lab-test-id" class="form-select" required>
+            <option value="">-- Choose Diagnostic Test --</option>
+            <option value="1">Complete Blood Count (CBC) [Ref: 12-16 g/dL, 4-11k/mcL]</option>
+            <option value="2">Lipid Profile [Ref: Total Chol &lt; 200 mg/dL]</option>
+            <option value="3">Liver Function Test (LFT) [Ref: SGOT/SGPT &lt; 40 U/L]</option>
+            <option value="4">Kidney Function Test / Serum Creatinine [Ref: 0.7-1.3 mg/dL]</option>
+            <option value="5">HbA1c Glycated Hemoglobin [Ref: &lt; 5.7% Normal]</option>
+            <option value="6">Thyroid Profile (T3, T4, TSH) [Ref: TSH 0.4-4.0 mIU/L]</option>
+            <option value="7">Chest X-Ray Digital PA View [Ref: Normal lung parenchymal pattern]</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clinical Indication & Special Instructions</label>
+          <textarea id="lab-instructions" class="form-control" rows="2" placeholder="e.g. 10 hours overnight fasting required. Rule out microcytic anemia."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; font-weight:700;">
+          🧪 Dispatch Diagnostic Lab Order
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: DIGITAL DISCHARGE SUMMARY ==================== -->
+<div class="modal-backdrop" id="modal-discharge-summary">
+  <div class="modal-card" style="max-width:680px; max-height:85vh; overflow-y:auto;">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span>📝</span> Issue Digital Clinical Discharge Summary</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-discharge-summary').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-discharge-summary" onsubmit="event.preventDefault(); submitDoctorDischarge();">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Patient Aadhaar / Phone *</label>
+            <input type="text" id="dis-patient-query" class="form-control" placeholder="Aadhaar or Phone" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input type="text" id="dis-department" class="form-control" value="{{ doctor.department|default:'General Medicine' }}">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Admission Date *</label>
+            <input type="date" id="dis-admission-date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Discharge Date *</label>
+            <input type="date" id="dis-discharge-date" class="form-control" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Final Diagnosis *</label>
+          <input type="text" id="dis-diagnosis" class="form-control" placeholder="e.g. Acute Viral Gastroenteritis with Mild Dehydration" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clinical Course & Treatment Given *</label>
+          <textarea id="dis-treatment-summary" class="form-control" rows="2" placeholder="IV fluids, antiemetics, rehydration therapy responded well..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Discharge Medications & Regimen</label>
+          <textarea id="dis-discharge-meds" class="form-control" rows="2" placeholder="Tab. ORS sachet twice daily, Tab. Pantoprazole 40mg 1-0-0 x 5 days"></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Diet & Physical Activity Advice</label>
+            <input type="text" id="dis-diet-advice" class="form-control" placeholder="Bland soft diet, plenty of oral fluids">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Follow-up Schedule</label>
+            <input type="text" id="dis-followup-advice" class="form-control" placeholder="Review in OPD after 7 days or SOS">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-emerald" style="width:100%; padding:12px; font-weight:700;">
+          ✓ Authorize & Digitally Sign Discharge Summary
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: REQUEST PATIENT CONSENT ==================== -->
+<div class="modal-backdrop" id="modal-request-consent">
+  <div class="modal-card" style="max-width:540px;">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span>🛡️</span> Request Patient Medical Record Consent</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-request-consent').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-request-consent" onsubmit="event.preventDefault(); submitDoctorConsentRequest();">
+        <div class="form-group">
+          <label class="form-label">Patient Aadhaar / Phone *</label>
+          <input type="text" id="consent-patient-query" class="form-control" placeholder="Enter Aadhaar or Phone" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Record Types Requested</label>
+          <div style="display:flex; gap:14px; margin-top:6px; flex-wrap:wrap; font-size:0.85rem;">
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="consent-types" value="VITALS" checked> Vitals Telemetry</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="consent-types" value="PRESCRIPTIONS" checked> Prescriptions</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="consent-types" value="LABS" checked> Lab Reports</label>
+            <label style="display:flex; align-items:center; gap:4px;"><input type="checkbox" name="consent-types" value="DISCHARGE" checked> Discharge History</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clinical Purpose / Reason *</label>
+          <input type="text" id="consent-reason" class="form-control" placeholder="e.g. Clinical review for ongoing chronic illness management" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Requested Validity (Hours)</label>
+          <select id="consent-validity" class="form-select">
+            <option value="24">24 Hours (OPD Visit)</option>
+            <option value="72">72 Hours (3 Days)</option>
+            <option value="168">7 Days (1 Week)</option>
+            <option value="720">30 Days (Extended Review)</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; font-weight:700;">
+          🛡️ Send Digital Consent Request to Citizen
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: LOG VACCINATION ==================== -->
+<div class="modal-backdrop" id="modal-log-vaccination">
+  <div class="modal-card" style="max-width:540px;">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span>💉</span> Administer & Record Vaccination</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-log-vaccination').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-log-vaccination" onsubmit="event.preventDefault(); submitDoctorVaccination();">
+        <div class="form-group">
+          <label class="form-label">Patient Aadhaar / Phone *</label>
+          <input type="text" id="vac-patient-query" class="form-control" placeholder="Enter Aadhaar or Phone" required>
+        </div>
+        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Vaccine Name *</label>
+            <input type="text" id="vac-name" class="form-control" placeholder="e.g. Covishield / Covaxin / Hepatitis B / Tetanus" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dose Number *</label>
+            <select id="vac-dose-number" class="form-select" required>
+              <option value="1">Dose 1 (Primary)</option>
+              <option value="2">Dose 2 (Secondary)</option>
+              <option value="3">Dose 3 / Booster</option>
+              <option value="4">Annual Booster</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Batch / Lot Number</label>
+            <input type="text" id="vac-batch-number" class="form-control" placeholder="e.g. COV-4491-B">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Administration Site</label>
+            <input type="text" id="vac-site" class="form-control" value="Left Deltoid (IM)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Next Due Date (If Applicable)</label>
+          <input type="date" id="vac-next-due" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-emerald" style="width:100%; padding:11px; font-weight:700;">
+          💉 Log Official Immunization Record
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.DOC_TIME_SERIES_DATA = {{ doc_time_series_json|safe }};
+</script>
+<script src="/static/js/doctor_portal.js"></script>
+{% endblock %}

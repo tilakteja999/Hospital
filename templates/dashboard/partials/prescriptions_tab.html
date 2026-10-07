@@ -1,0 +1,79 @@
+<!-- ==================== PRESCRIPTIONS TAB: TABLETS TIMETABLE ==================== -->
+<div class="tab-pane" id="tab-pane-prescriptions">
+  
+  <div class="section-header">
+    <div class="section-title">
+      <h2>💊 <span data-i18n="rx_title">Prescribed Tablets & Medication Timetable</span></h2>
+      <span class="subtitle" data-i18n="rx_sub">Active medications assigned by Government Hospital Doctors with dosage schedules</span>
+    </div>
+    <div>
+      <button type="button" class="btn btn-sm btn-outline" onclick="if(window.VoiceAIEngine) VoiceAIEngine.processQuery('Show my medicines');" data-i18n="rx_read_btn">
+        🎙️ Voice AI Read Schedule
+      </button>
+    </div>
+  </div>
+
+  <div class="prescription-grid">
+    {% if prescriptions %}
+      {% for rx in prescriptions %}
+      <div class="prescription-card">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+            <div>
+              <h3 style="font-size:1.15rem; font-weight:700; color:var(--primary-navy);">{{ rx.medicine_name }}</h3>
+              <div style="font-size:0.82rem; color:var(--text-muted);">{{ rx.form }} • {{ rx.dosage }}</div>
+            </div>
+            <span class="vital-status-pill success" data-i18n="status_active">Active</span>
+          </div>
+
+          <!-- Purpose & Indications Box -->
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:10px 12px; border-radius:8px; font-size:0.85rem; margin:12px 0;">
+            <div style="font-weight:700; font-size:0.8rem; text-transform:uppercase; color:#15803d; margin-bottom:2px;" data-i18n="rx_purpose_label">
+              🎯 Why This Tablet is Used:
+            </div>
+            <div style="font-weight:600; color:#064e3b;">
+              {{ rx.purpose|default:"Relief of clinical symptoms & health maintenance" }}
+            </div>
+          </div>
+
+          <!-- Time Schedule Row: Morning, Afternoon, Night -->
+          <div style="font-size: 0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-top:8px;" data-i18n="timing_label">Daily Timing:</div>
+          <div class="pill-schedule-row">
+            <div class="pill-badge {% if rx.morning %}active{% endif %}">
+              <span>🌅</span> <span data-i18n="morning_pill">Morning (सुबह)</span>
+            </div>
+            <div class="pill-badge {% if rx.afternoon %}active{% endif %}">
+              <span>☀️</span> <span data-i18n="afternoon_pill">Afternoon (दोपहर)</span>
+            </div>
+            <div class="pill-badge {% if rx.night %}active{% endif %}">
+              <span>🌙</span> <span data-i18n="night_pill">Night (रात)</span>
+            </div>
+          </div>
+
+          <!-- Instructions & Timing -->
+          <div style="background:var(--surface-alt); padding:10px 12px; border-radius:8px; font-size:0.85rem; margin-bottom:12px;">
+            <div style="color:var(--primary-navy); font-weight:600; margin-bottom:2px;">
+              🍽️ <span data-i18n="timing_label">Timing</span>: <strong>{{ rx.get_timing_display }}</strong>
+            </div>
+            <div style="color:var(--text-muted);">
+              📝 <span data-i18n="instructions_label">Instructions</span>: {{ rx.instructions|default:"Take as prescribed with water." }}
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:0.78rem; color:var(--text-muted); border-top:1px dashed var(--border-color); padding-top:10px; display:flex; justify-content:space-between;">
+          <span><span data-i18n="prescribed_by_label">Prescribed by</span>: <strong>{{ rx.prescribed_by }}</strong></span>
+          <span><span data-i18n="duration_label">Duration</span>: <strong>{{ rx.duration_days }} Days</strong></span>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="grid-column: 1 / -1; background:#ffffff; border-radius:12px; padding:40px 20px; text-align:center; border:1px solid var(--border-color);">
+        <div style="font-size:2.5rem; margin-bottom:10px;">💊</div>
+        <h3 style="color:var(--primary-navy); margin-bottom:6px;" data-i18n="no_prescriptions">No Active Prescriptions Assigned</h3>
+        <p style="color:var(--text-muted); font-size:0.9rem;" data-i18n="no_rx_sub">Your doctor's prescribed tablets and medication schedule will appear here.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Hospital Admin Login | Swasthya Setu{% endblock %}
+
+{% block content %}
+<div style="max-width: 460px; margin: 30px auto;">
+  <div class="vital-card" style="padding: 32px; border-top: 4px solid #0284c7;">
+    
+    <div style="text-align:center; margin-bottom: 24px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(2, 132, 199, 0.15); color: #0284c7; display:inline-flex; align-items:center; justify-content:center; font-size: 1.8rem; margin-bottom: 10px;">
+        🏥
+      </div>
+      <h2 style="color: var(--primary-navy); font-weight: 700; font-size: 1.4rem;">Hospital Admin Portal</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Superintendents, Medical Directors & Hospital Operations</p>
+    </div>
+
+    <form method="POST" action="{% url 'hospital_login' %}">
+      {% csrf_token %}
+
+      <!-- Hospital Phone / Admin ID -->
+      <div class="form-group">
+        <label class="form-label" for="phone">
+          <span>Hospital Admin ID / Registered Phone</span>
+        </label>
+        <div style="display:flex; align-items:center; position:relative;">
+          <span style="position:absolute; left: 12px; font-weight: 600; color: var(--text-muted); font-size: 0.9rem;">+91</span>
+          <input type="text" name="phone" id="phone" class="form-control" style="padding-left: 50px;" placeholder="9811111111" value="9811111111" required>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <div class="form-label">
+          <label for="password">Security Password</label>
+          <a href="{% url 'forgot_password' %}" style="font-size: 0.82rem; color: #0284c7; text-decoration: none; font-weight: 600;">
+            Forgot Password?
+          </a>
+        </div>
+        <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" value="hospital123" required>
+      </div>
+
+      <!-- Login Button -->
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 6px; font-size: 1rem; background: #0284c7; border-color: #0284c7;">
+        Login to Hospital Dashboard
+      </button>
+
+      <div style="background: #e0f2fe; padding: 12px; border-radius: var(--radius-sm); text-align: center; margin-top: 20px; border: 1px solid #bae6fd;">
+        <span style="font-size: 0.8rem; color: #0369a1; font-weight: 600;">Hospital Admin Demo Credentials:</span>
+        <div style="font-size: 0.78rem; color: #0c4a6e; margin-top: 2px;">Phone: <strong>9811111111</strong> | Password: <strong>hospital123</strong></div>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 0.88rem;">
+        <a href="{% url 'role_portal' %}" style="color: var(--text-muted); text-decoration: none;">
+          ← Switch Role Portal
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

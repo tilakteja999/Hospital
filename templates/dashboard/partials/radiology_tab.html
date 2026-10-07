@@ -1,0 +1,462 @@
+<!-- ==================== TAB: RADIOLOGY REPORTS & DIAGNOSTIC IMAGING ==================== -->
+<div class="tab-pane" id="pane-radiology" style="display:none;">
+  
+  <!-- Banner Header -->
+  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); color: #ffffff; padding: 24px 28px; border-radius: 14px; margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow: 0 6px 20px rgba(15,23,42,0.25);">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span style="font-size:1.8rem;">🩻</span>
+        <h2 style="font-size:1.45rem; font-weight:800; margin:0; letter-spacing:-0.3px;" data-i18n="rad_banner_title">
+          National Radiology & Diagnostic Imaging Vault
+        </h2>
+        <span class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; font-size:0.78rem; font-weight:700;" data-i18n="rad_badge_pac">DICOM PACS Synchronized</span>
+      </div>
+      <p style="color:#94a3b8; font-size:0.88rem; margin:8px 0 0 0; max-width:820px;" data-i18n="rad_banner_sub">
+        High-resolution Digital X-Ray, 128-Slice CT Scans, 3.0T MRI Studies, Ultrasound Doppler, and Digital Mammography with certified radiologist impressions, detailed findings, quantitative anatomical measurements, and secure PACS viewers.
+      </p>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span class="vital-status-pill success" style="font-size:0.85rem; padding:8px 14px;" data-i18n="rad_security_pill">
+        🔒 Encrypted Tele-Radiology (Django Authorized)
+      </span>
+    </div>
+  </div>
+
+  <!-- Filter Pills Bar & Search -->
+  <div class="vital-card" style="padding: 16px 20px; margin-bottom: 24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 12px;">
+      <div style="font-size:0.88rem; font-weight:700; color:var(--primary-navy);" data-i18n="rad_filter_heading">
+        🎯 Filter Diagnostic Modality:
+      </div>
+      <input type="text" id="radiology-search-input" class="form-control" placeholder="Search report, body part, findings..." data-i18n-placeholder="rad_search_placeholder" style="font-size:0.82rem; padding:6px 12px; width:280px;">
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;" id="radiology-modality-pills">
+      <button type="button" class="btn btn-sm btn-rad-filter active" data-mod="all" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#0f172a; color:#ffffff; border:none; cursor:pointer;" data-i18n="rad_mod_all">
+        🌐 All Studies ({{ radiology_reports.count }})
+      </button>
+      <button type="button" class="btn btn-sm btn-rad-filter" data-mod="X-Ray" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="rad_mod_xray">
+        🩻 Digital X-Ray
+      </button>
+      <button type="button" class="btn btn-sm btn-rad-filter" data-mod="CT Scan" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="rad_mod_ct">
+        🌀 128-Slice CT Scan
+      </button>
+      <button type="button" class="btn btn-sm btn-rad-filter" data-mod="MRI" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="rad_mod_mri">
+        🧠 3.0T MRI
+      </button>
+      <button type="button" class="btn btn-sm btn-rad-filter" data-mod="Ultrasound" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="rad_mod_usg">
+        📡 Ultrasound Sonography
+      </button>
+      <button type="button" class="btn btn-sm btn-rad-filter" data-mod="Mammography" style="padding:6px 14px; font-size:0.8rem; font-weight:700; border-radius:20px; background:#f1f5f9; color:#334155; border:none; cursor:pointer;" data-i18n="rad_mod_mammo">
+        🎀 Digital Mammography
+      </button>
+    </div>
+  </div>
+
+  <!-- RADIOLOGY REPORT GRID -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 24px; margin-bottom: 30px;" id="radiology-report-grid">
+
+    {% for report in radiology_reports %}
+    <div class="radiology-card" data-mod="{{ report.modality }}" data-search="{{ report.report_title|lower }} {{ report.body_part|lower }} {{ report.findings|lower }} {{ report.impression|lower }} {{ report.hospital_name|lower }}" style="background:#ffffff; border:1px solid #e2e8f0; border-top: 5px solid {% if report.modality == 'CT Scan' %}#2563eb{% elif report.modality == 'MRI' %}#7c3aed{% elif report.modality == 'Ultrasound' %}#059669{% elif report.modality == 'Mammography' %}#db2777{% else %}#0284c7{% endif %}; border-radius:14px; padding:22px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 14px rgba(0,0,0,0.05); transition:transform 0.2s, box-shadow 0.2s;">
+      <div>
+        <!-- Card Header with Modality and Date -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <span class="badge" style="background:{% if report.modality == 'CT Scan' %}#dbeafe; color:#1e40af{% elif report.modality == 'MRI' %}#f3e8ff; color:#6b21a8{% elif report.modality == 'Ultrasound' %}#dcfce7; color:#15803d{% elif report.modality == 'Mammography' %}#fce7f3; color:#9d174d{% else %}#e0f2fe; color:#0369a1{% endif %}; font-weight:800; font-size:0.78rem; padding:4px 10px;">
+            🩻 {{ report.modality }} • {{ report.body_part }}
+          </span>
+          <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;">
+            📅 {{ report.report_date|date:"d-M-Y" }}
+          </span>
+        </div>
+
+        <!-- Title & Hospital Information -->
+        <h4 style="font-size:1.15rem; color:var(--primary-navy); font-weight:800; margin:2px 0 6px 0; line-height:1.35;">
+          {{ report.report_title }}
+        </h4>
+        <div style="font-size:0.8rem; color:#475569; margin-bottom:14px;">
+          🏥 {{ report.hospital_name }}<br>
+          👨‍⚕️ Radiologist: <strong>{{ report.radiologist_name }}</strong> {% if report.radiologist_reg %}<span style="color:#64748b;">(Reg: {{ report.radiologist_reg }})</span>{% endif %}
+        </div>
+
+        <!-- 1. Clinical Information / Reason for Exam -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; font-size:0.82rem; margin-bottom:10px;">
+          <div style="color:#0f172a; font-weight:700; margin-bottom:3px; display:flex; align-items:center; gap:6px;">
+            <span>📋</span> <span data-i18n="rad_reason_heading">Clinical Reason / Indication:</span>
+          </div>
+          <p style="color:#475569; margin:0; line-height:1.45;">
+            {{ report.reason_for_exam|default:"Diagnostic clinical evaluation as requested by attending physician." }}
+          </p>
+        </div>
+
+        <!-- 2. Procedure / Examination Technique -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; font-size:0.82rem; margin-bottom:10px;">
+          <div style="color:#0f172a; font-weight:700; margin-bottom:3px; display:flex; align-items:center; gap:6px;">
+            <span>⚙️</span> <span data-i18n="rad_proc_heading">Examination & Technique:</span>
+          </div>
+          <p style="color:#475569; margin:0; line-height:1.45;">
+            {{ report.procedure_name|default:"Standard Diagnostic High-Resolution Multi-Slice Acquisition." }}
+          </p>
+        </div>
+
+        <!-- 3. PACS Interactive Imaging Frame Thumbnail -->
+        <div style="position:relative; background:#020617; border-radius:10px; overflow:hidden; margin-bottom:12px; border:2px solid #1e293b; height:180px; display:flex; align-items:center; justify-content:center;">
+          {% if report.modality == 'X-Ray' %}
+          <div style="width:100%; height:100%; background:radial-gradient(circle, #334155 10%, #0f172a 70%, #020617 100%); display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:3rem;">
+            🩻
+          </div>
+          {% elif report.modality == 'CT Scan' %}
+          <div style="width:100%; height:100%; background:radial-gradient(circle, #1e293b 20%, #090d16 80%); display:flex; align-items:center; justify-content:center; color:#38bdf8; font-size:3rem;">
+            🌀
+          </div>
+          {% elif report.modality == 'MRI' %}
+          <div style="width:100%; height:100%; background:radial-gradient(circle, #2e1065 20%, #0f0728 80%); display:flex; align-items:center; justify-content:center; color:#c084fc; font-size:3rem;">
+            🧠
+          </div>
+          {% elif report.modality == 'Mammography' %}
+          <div style="width:100%; height:100%; background:radial-gradient(circle, #500724 20%, #1a020b 80%); display:flex; align-items:center; justify-content:center; color:#f472b6; font-size:3rem;">
+            🎀
+          </div>
+          {% else %}
+          <div style="width:100%; height:100%; background:radial-gradient(circle, #064e3b 20%, #021f17 80%); display:flex; align-items:center; justify-content:center; color:#34d399; font-size:3rem;">
+            📡
+          </div>
+          {% endif %}
+
+          <!-- DICOM Overlay Tags -->
+          <div style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.8); color:#38bdf8; padding:3px 8px; border-radius:6px; font-size:0.72rem; font-family:monospace;">
+            {% if report.is_dicom %}DICOM Part 10{% else %}PACS Digital Study{% endif %} • {{ report.dicom_slice_count }} Slices
+          </div>
+
+          <div style="position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.75); color:#ffffff; padding:2px 8px; border-radius:6px; font-size:0.72rem; font-family:monospace;">
+            RAD-{{ report.id|stringformat:"04d" }}
+          </div>
+
+          <button type="button" class="btn btn-sm btn-inspect-dicom" 
+                  data-report-id="{{ report.id }}" 
+                  data-modality="{{ report.modality }}" 
+                  data-title="{{ report.report_title }}"
+                  data-is-dicom="{{ report.is_dicom|yesno:'true,false' }}"
+                  data-slices="{{ report.dicom_slice_count }}"
+                  style="position:absolute; top:8px; right:8px; background:rgba(15,23,42,0.85); color:#ffffff; border:1px solid rgba(255,255,255,0.3); padding:4px 10px; border-radius:6px; font-size:0.74rem; cursor:pointer;">
+            🔍 Open PACS
+          </button>
+        </div>
+
+        <!-- 4. Detailed Findings -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; font-size:0.83rem; margin-bottom:10px;">
+          <div style="color:var(--primary-navy); font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+            <span>🔬</span> <span data-i18n="rad_findings_heading">Radiological Findings:</span>
+          </div>
+          <p style="color:#334155; margin:0; line-height:1.45;">{{ report.findings }}</p>
+        </div>
+
+        <!-- 5. Quantitative Measurements & Anatomical Parameters -->
+        {% if report.measurements %}
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 12px; font-size:0.82rem; margin-bottom:10px;">
+          <div style="color:#0369a1; font-weight:700; margin-bottom:3px; display:flex; align-items:center; gap:6px;">
+            <span>📏</span> <span data-i18n="rad_meas_heading">Measurements & Anatomical Details:</span>
+          </div>
+          <p style="color:#0c4a6e; margin:0; line-height:1.45;">{{ report.measurements }}</p>
+        </div>
+        {% endif %}
+
+        <!-- 6. Radiologist Impression / Conclusion -->
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:12px; font-size:0.84rem; margin-bottom:6px;">
+          <div style="color:#065f46; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+            <span>💡</span> <span data-i18n="rad_impression_heading">Radiologist Impression & Conclusion:</span>
+          </div>
+          <p style="color:#047857; margin:0; font-weight:600; line-height:1.45;">{{ report.impression }}</p>
+        </div>
+      </div>
+
+      <!-- Action Footer with Full Report Modal & DICOM PACS Viewer -->
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <button type="button" class="btn btn-sm btn-outline btn-view-full-rad-report" 
+                data-report-id="{{ report.id }}"
+                style="font-size:0.78rem; font-weight:700;">
+          📄 <span data-i18n="rad_view_full_report">View Full Report</span>
+        </button>
+
+        <button type="button" class="btn btn-sm btn-primary btn-inspect-dicom" 
+                data-report-id="{{ report.id }}" 
+                data-modality="{{ report.modality }}" 
+                data-title="{{ report.report_title }}"
+                data-is-dicom="{{ report.is_dicom|yesno:'true,false' }}"
+                data-slices="{{ report.dicom_slice_count }}"
+                style="font-size:0.78rem; font-weight:700; background:{% if report.modality == 'MRI' %}#7c3aed{% elif report.modality == 'CT Scan' %}#2563eb{% elif report.modality == 'Mammography' %}#db2777{% else %}#0284c7{% endif %}; border:none;">
+          🔍 <span data-i18n="rad_inspect_dicom">Inspect DICOM Study</span>
+        </button>
+      </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align:center; padding:40px; background:#f8fafc; border-radius:12px; color:var(--text-muted);">
+      <div style="font-size:2.5rem; margin-bottom:10px;">🩻</div>
+      <h4 data-i18n="no_rad_reports">No Radiology Reports on Record</h4>
+      <p style="font-size:0.85rem;" data-i18n="rad_empty_msg">X-Ray, CT Scan, MRI, Ultrasound, and Mammography reports will appear here after diagnostic evaluation.</p>
+    </div>
+    {% endfor %}
+
+  </div>
+
+</div>
+
+
+<!-- ==================== MODAL 1: FULL CERTIFIED RADIOLOGY REPORT ==================== -->
+<div class="modal-backdrop" id="modal-radiology-full-report">
+  <div class="modal-card" style="max-width:820px; width:95%; max-height:90vh; overflow-y:auto; border-radius:16px; background:#ffffff; box-shadow:0 12px 40px rgba(0,0,0,0.3); padding:0;">
+    
+    <!-- Report Top Government Header -->
+    <div style="background:#0f172a; color:#ffffff; padding:18px 24px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.6rem;">🩻</span>
+        <div>
+          <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#ffffff;" data-i18n="rad_cert_title">
+            Government of India • Tele-Radiology Diagnostic Report
+          </h3>
+          <div style="font-size:0.74rem; color:#94a3b8;" data-i18n="rad_cert_sub">
+            National Health Digital PACS Network • Verified Clinical Record
+          </div>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" style="color:#ffffff; font-size:1.4rem; background:transparent; border:none; cursor:pointer;" onclick="document.getElementById('modal-radiology-full-report').classList.remove('open');">&times;</button>
+    </div>
+
+    <!-- Official Clinical Report Body -->
+    <div style="padding:28px 32px;" id="full-rad-report-content">
+      
+      <!-- Patient & Facility Summary Table -->
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:16px 20px; margin-bottom:20px; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; font-size:0.85rem;">
+        <div>
+          <span style="color:#64748b; font-size:0.75rem;" data-i18n="lbl_patient_name">PATIENT NAME</span><br>
+          <strong id="full-rad-patient-name" style="color:#0f172a; font-size:0.95rem;">-</strong>
+        </div>
+        <div>
+          <span style="color:#64748b; font-size:0.75rem;" data-i18n="lbl_patient_id">HEALTH ID / ABHA</span><br>
+          <strong id="full-rad-patient-id" style="color:#0f172a;">-</strong>
+        </div>
+        <div>
+          <span style="color:#64748b; font-size:0.75rem;" data-i18n="lbl_exam_date">DATE OF EXAMINATION</span><br>
+          <strong id="full-rad-date" style="color:#0f172a;">-</strong>
+        </div>
+        <div>
+          <span style="color:#64748b; font-size:0.75rem;" data-i18n="lbl_modality">MODALITY & BODY PART</span><br>
+          <strong id="full-rad-modality" style="color:#0284c7;">-</strong>
+        </div>
+        <div style="grid-column: 1 / -1; border-top:1px solid #e2e8f0; padding-top:8px;">
+          <span style="color:#64748b; font-size:0.75rem;" data-i18n="lbl_facility">DIAGNOSTIC FACILITY / HOSPITAL</span><br>
+          <strong id="full-rad-hospital" style="color:#0f172a;">-</strong>
+        </div>
+      </div>
+
+      <!-- Clinical Information & Indication -->
+      <div style="margin-bottom:18px;">
+        <h4 style="font-size:0.95rem; color:#0f172a; margin:0 0 6px 0; border-bottom:2px solid #e2e8f0; padding-bottom:4px; font-weight:800;" data-i18n="rad_section_clinical">
+          1. CLINICAL INFORMATION & INDICATION
+        </h4>
+        <p id="full-rad-clinical-reason" style="font-size:0.88rem; color:#334155; line-height:1.6; margin:0; padding-left:4px;">-</p>
+      </div>
+
+      <!-- Procedure / Technique -->
+      <div style="margin-bottom:18px;">
+        <h4 style="font-size:0.95rem; color:#0f172a; margin:0 0 6px 0; border-bottom:2px solid #e2e8f0; padding-bottom:4px; font-weight:800;" data-i18n="rad_section_procedure">
+          2. EXAMINATION PROCEDURE & PROTOCOL
+        </h4>
+        <p id="full-rad-procedure" style="font-size:0.88rem; color:#334155; line-height:1.6; margin:0; padding-left:4px;">-</p>
+      </div>
+
+      <!-- Detailed Findings -->
+      <div style="margin-bottom:18px;">
+        <h4 style="font-size:0.95rem; color:#0f172a; margin:0 0 6px 0; border-bottom:2px solid #e2e8f0; padding-bottom:4px; font-weight:800;" data-i18n="rad_section_findings">
+          3. RADIOLOGICAL FINDINGS
+        </h4>
+        <p id="full-rad-findings" style="font-size:0.88rem; color:#334155; line-height:1.65; margin:0; padding-left:4px; white-space:pre-line;">-</p>
+      </div>
+
+      <!-- Measurements -->
+      <div style="margin-bottom:18px;" id="full-rad-measurements-container">
+        <h4 style="font-size:0.95rem; color:#0f172a; margin:0 0 6px 0; border-bottom:2px solid #e2e8f0; padding-bottom:4px; font-weight:800;" data-i18n="rad_section_meas">
+          4. QUANTITATIVE MEASUREMENTS & ANATOMICAL PARAMETERS
+        </h4>
+        <p id="full-rad-measurements" style="font-size:0.88rem; color:#334155; line-height:1.6; margin:0; padding-left:4px;">-</p>
+      </div>
+
+      <!-- Impression & Conclusion -->
+      <div style="margin-bottom:24px; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:16px 20px;">
+        <h4 style="font-size:0.95rem; color:#065f46; margin:0 0 6px 0; font-weight:800;" data-i18n="rad_section_impression">
+          5. IMPRESSION & CONCLUSION
+        </h4>
+        <p id="full-rad-impression" style="font-size:0.92rem; color:#047857; line-height:1.6; font-weight:700; margin:0;">-</p>
+      </div>
+
+      <!-- Radiologist Attestation Block -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; border-top:2px dashed #cbd5e1; padding-top:18px; margin-top:24px; flex-wrap:wrap; gap:16px;">
+        <div>
+          <div style="font-size:0.75rem; color:#64748b;" data-i18n="rad_digital_auth">DIGITAL VERIFICATION & AUDIT TRAIL</div>
+          <div style="font-size:0.78rem; font-family:monospace; color:#0284c7; margin-top:2px;" id="full-rad-ref-stamp">
+            VERIFIED: NDHM-RAD-2026-X49102
+          </div>
+          <div style="font-size:0.72rem; color:#94a3b8; margin-top:2px;">
+            Authorized under National Digital Health Protocol (ABDM Compliant)
+          </div>
+        </div>
+
+        <div style="text-align:right;">
+          <div style="font-size:0.85rem; font-weight:800; color:#0f172a;" id="full-rad-doctor">-</div>
+          <div style="font-size:0.78rem; color:#475569;" id="full-rad-doctor-reg">Certified Radiologist</div>
+          <div style="font-size:0.72rem; color:#10b981; font-weight:700; margin-top:2px;">
+            ✓ Digitally Signed & Approved
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer Controls -->
+    <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:14px 24px; display:flex; justify-content:space-between; align-items:center;">
+      <button type="button" class="btn btn-sm btn-outline" onclick="window.print();" style="display:flex; align-items:center; gap:6px;">
+        🖨️ <span data-i18n="btn_print">Print / Download PDF</span>
+      </button>
+
+      <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('modal-radiology-full-report').classList.remove('open');" data-i18n="btn_close">
+        Close Report
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ==================== MODAL 2: INTERACTIVE DICOM-COMPATIBLE WEB PACS VIEWER ==================== -->
+<div class="modal-backdrop" id="modal-dicom-viewer">
+  <div class="modal-card" style="max-width:1050px; width:98%; padding:0; border-radius:16px; overflow:hidden; background:#020617; color:#ffffff; box-shadow:0 16px 50px rgba(0,0,0,0.7);">
+    
+    <!-- PACS Viewer Top Toolbar -->
+    <div style="background:#0f172a; padding:12px 20px; border-bottom:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:1.4rem;">🩻</span>
+        <div>
+          <h3 id="dicom-modal-title" style="color:#ffffff; font-size:1.05rem; margin:0; font-weight:800; display:flex; align-items:center; gap:8px;">
+            DICOM Study Viewer
+          </h3>
+          <div style="font-size:0.74rem; color:#94a3b8; font-family:monospace;" id="dicom-modal-subtitle">
+            AIIMS Radiodiagnosis PACS • 16-Bit Radiographic Density
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="badge" style="background:#1e293b; color:#38bdf8; font-family:monospace; font-size:0.74rem; padding:4px 10px;" id="dicom-format-badge">
+          DICOM Part 10 Ready
+        </span>
+        <button type="button" class="modal-close-btn" style="color:#ffffff; font-size:1.4rem; background:transparent; border:none; cursor:pointer;" onclick="document.getElementById('modal-dicom-viewer').classList.remove('open');">&times;</button>
+      </div>
+    </div>
+
+    <!-- PACS Clinical Controls Bar -->
+    <div style="background:#090d16; padding:10px 18px; border-bottom:1px solid #1e293b; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:0.8rem;">
+      
+      <!-- Preset Windows -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="color:#94a3b8; font-size:0.76rem;" data-i18n="rad_preset_label">Window Preset:</span>
+        <select id="dicom-window-preset" style="background:#1e293b; color:#ffffff; border:1px solid #334155; border-radius:6px; padding:4px 8px; font-size:0.76rem; outline:none;">
+          <option value="default">Default Radiographic (W:4096 L:2048)</option>
+          <option value="lung">Chest Lung Window (W:1500 L:-600)</option>
+          <option value="bone">Bone Window (W:2000 L:500)</option>
+          <option value="soft">Soft Tissue Window (W:400 L:50)</option>
+          <option value="brain">Brain Window (W:80 L:40)</option>
+        </select>
+      </div>
+
+      <!-- Interactive Tool Controls -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" class="btn btn-xs btn-outline" id="btn-dicom-zoom-in" title="Zoom In" style="color:#ffffff; border-color:#334155; padding:4px 8px;">
+          🔍+
+        </button>
+        <button type="button" class="btn btn-xs btn-outline" id="btn-dicom-zoom-out" title="Zoom Out" style="color:#ffffff; border-color:#334155; padding:4px 8px;">
+          🔍-
+        </button>
+        <button type="button" class="btn btn-xs btn-outline" id="btn-dicom-invert" title="Invert Monochrome (Black/White)" style="color:#ffffff; border-color:#334155; padding:4px 8px;">
+          ◐ Invert
+        </button>
+        <button type="button" class="btn btn-xs btn-outline" id="btn-dicom-reset" title="Reset Viewport" style="color:#ffffff; border-color:#334155; padding:4px 8px;">
+          🔄 Reset
+        </button>
+        <button type="button" class="btn btn-xs btn-outline" id="btn-dicom-fullscreen" title="Toggle Fullscreen" style="color:#ffffff; border-color:#334155; padding:4px 8px;">
+          ⛶ Fullscreen
+        </button>
+      </div>
+
+      <!-- Slice Navigator (Multi-slice CT / MRI) -->
+      <div style="display:flex; align-items:center; gap:8px;" id="dicom-slice-control-box">
+        <button type="button" class="btn btn-xs" id="btn-slice-prev" style="background:#1e293b; color:#ffffff; border:none; padding:4px 8px;">◀</button>
+        <span id="dicom-slice-indicator" style="font-family:monospace; font-size:0.76rem; color:#38bdf8;">Slice 1 / 48</span>
+        <button type="button" class="btn btn-xs" id="btn-slice-next" style="background:#1e293b; color:#ffffff; border:none; padding:4px 8px;">▶</button>
+        <input type="range" id="dicom-slice-slider" min="1" max="48" value="1" style="width:90px; accent-color:#38bdf8; cursor:pointer;">
+      </div>
+
+    </div>
+
+    <!-- PACS Main Screen: Canvas Viewport & Sidebar Inspector -->
+    <div style="display:flex; background:#000000; min-height:480px; position:relative; overflow:hidden;">
+      
+      <!-- Primary Canvas Viewport -->
+      <div style="flex:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; min-height:480px;" id="dicom-canvas-wrapper">
+        <canvas id="dicom-canvas" width="512" height="512" style="max-width:100%; max-height:480px; object-fit:contain; cursor:grab;"></canvas>
+
+        <!-- On-Screen Patient & PACS Overlay HUD -->
+        <div style="position:absolute; top:12px; left:14px; font-family:monospace; font-size:0.75rem; color:#38bdf8; pointer-events:none; line-height:1.4; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+          <div id="hud-patient-name">PAT: RAMESH KUMAR VERMA</div>
+          <div id="hud-patient-id">ID: GOI-PAT-9876543210</div>
+          <div id="hud-modality">MOD: CR (Chest PA View)</div>
+        </div>
+
+        <div style="position:absolute; top:12px; right:14px; font-family:monospace; font-size:0.75rem; color:#94a3b8; pointer-events:none; text-align:right; line-height:1.4; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+          <div id="hud-hospital">AIIMS RADIODIAGNOSIS</div>
+          <div id="hud-matrix">MATRIX: 256 x 256</div>
+          <div id="hud-bits">16-BIT UNCOMPRESSED</div>
+        </div>
+
+        <div style="position:absolute; bottom:12px; left:14px; font-family:monospace; font-size:0.75rem; color:#94a3b8; pointer-events:none; line-height:1.4; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+          <div id="hud-zoom">ZOOM: 100%</div>
+          <div id="hud-window">W: 4096 L: 2048</div>
+        </div>
+
+        <div style="position:absolute; bottom:12px; right:14px; font-family:monospace; font-size:0.75rem; color:#10b981; pointer-events:none; text-align:right; line-height:1.4; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+          <div>🔒 AUTHENTICATED STREAM</div>
+          <div>DJANGO RBAC SECURED</div>
+        </div>
+      </div>
+
+      <!-- Collapsible DICOM Metadata Tag Inspector Sidebar -->
+      <div style="width:280px; background:#0b1329; border-left:1px solid #1e293b; padding:16px; font-size:0.78rem; overflow-y:auto; max-height:480px; color:#cbd5e1;" id="dicom-metadata-sidebar">
+        <div style="font-weight:800; color:#38bdf8; margin-bottom:10px; font-size:0.82rem; display:flex; align-items:center; gap:6px;">
+          <span>🏷️</span> DICOM PS3.10 Header
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; font-family:monospace; font-size:0.74rem;">
+          <div><span style="color:#64748b;">(0008,0060) Modality:</span><br><strong id="meta-modality" style="color:#ffffff;">CR</strong></div>
+          <div><span style="color:#64748b;">(0008,1030) Study Desc:</span><br><strong id="meta-desc" style="color:#ffffff;">Chest PA Radiograph</strong></div>
+          <div><span style="color:#64748b;">(0010,0010) Patient Name:</span><br><strong id="meta-patient" style="color:#ffffff;">Ramesh^Kumar</strong></div>
+          <div><span style="color:#64748b;">(0028,0010) Rows x Cols:</span><br><strong id="meta-dims" style="color:#ffffff;">256 x 256</strong></div>
+          <div><span style="color:#64748b;">(0028,0100) Bits Allocated:</span><br><strong id="meta-bits" style="color:#ffffff;">16 Bits</strong></div>
+          <div><span style="color:#64748b;">(0028,1050) Window Center:</span><br><strong id="meta-wc" style="color:#ffffff;">2048</strong></div>
+          <div><span style="color:#64748b;">(0028,1051) Window Width:</span><br><strong id="meta-ww" style="color:#ffffff;">4096</strong></div>
+          <div><span style="color:#64748b;">Storage Security:</span><br><strong style="color:#10b981;">Encrypted Binary</strong></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PACS Bottom Status Bar -->
+    <div style="background:#0f172a; padding:12px 20px; border-top:1px solid #1e293b; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <span style="font-size:0.78rem; color:#94a3b8;">
+        🔒 DICOM Access Authorized: Every view logged to Django Security Audit Trail. No unauthenticated URLs exposed.
+      </span>
+
+      <button type="button" class="btn btn-sm btn-outline" style="color:#ffffff; border-color:rgba(255,255,255,0.4);" onclick="document.getElementById('modal-dicom-viewer').classList.remove('open');" data-i18n="btn_close_pacs">
+        Close PACS Viewer
+      </button>
+    </div>
+
+  </div>
+</div>

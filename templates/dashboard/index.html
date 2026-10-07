@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+
+{% block title %}Citizen Dashboard | Hospital Government of India{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  
+  <!-- 1. HOME TAB (Vitals Boxes & Live Telemetry Charts) -->
+  {% include 'dashboard/partials/home_tab.html' %}
+
+  <!-- 2. RECORDS TAB (Hospital Visit History & Diagnostic Reports) -->
+  {% include 'dashboard/partials/records_tab.html' %}
+
+  <!-- 3. BOOKINGS TAB (Smart Slot Checker & Reservation Engine) -->
+  {% include 'dashboard/partials/bookings_tab.html' %}
+
+  <!-- 4. NOTIFICATIONS TAB (Health Checkup Reminders & Advisories) -->
+  {% include 'dashboard/partials/notifications_tab.html' %}
+
+  <!-- 5. PRESCRIPTION TAB (Tablets Timetable & Dosage Schedules) -->
+  {% include 'dashboard/partials/prescriptions_tab.html' %}
+
+  <!-- 6. PHYSIOTHERAPY TAB (Home Rehabilitation Video Modules) -->
+  {% include 'dashboard/partials/physio_tab.html' %}
+
+  <!-- 7. RADIOLOGY TAB (X-Ray, CT Scan & DICOM Imaging Frames) -->
+  {% include 'dashboard/partials/radiology_tab.html' %}
+
+  <!-- 8. EMERGENCY TAB (SOS, Ambulance, Helplines, Feedback) -->
+  {% include 'dashboard/partials/emergency_tab.html' %}
+
+  <!-- 8. ABOUT US TAB (Portal Guide & Directory) -->
+  {% include 'dashboard/partials/about_tab.html' %}
+
+  <!-- 9. SETTINGS TAB (Profile, Aadhaar, Accessibility) -->
+  {% include 'dashboard/partials/settings_tab.html' %}
+
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- ==================== MODAL 1: BOOKING RESULT POPUP (ACCEPTED / DENIED) ==================== -->
+<div class="modal-backdrop" id="booking-result-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="booking-modal-status-title">Appointment Status</h3>
+      <button type="button" class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body" id="booking-result-content">
+      <!-- Injected via JavaScript based on Slot Availability -->
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary btn-modal-close" onclick="document.getElementById('booking-result-modal').classList.remove('open'); window.location.reload();">
+        Close / View in Bookings
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL 2: FULL MEDICAL REPORT DETAIL ==================== -->
+<div class="modal-backdrop" id="record-detail-modal">
+  <div class="modal-card" style="max-width: 650px;">
+    <div class="modal-header">
+      <h3 id="record-modal-title">Hospital Diagnostic Report</h3>
+      <button type="button" class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body" id="record-modal-body">
+      <!-- Injected via AJAX -->
+    </div>
+    <div class="modal-footer" style="display:flex; justify-content:space-between; width:100%;">
+      <button type="button" class="btn btn-emerald btn-sm" id="record-modal-sync-btn" onclick="if(window.App) App.syncRecordVitals(this.getAttribute('data-id')); document.getElementById('record-detail-modal').classList.remove('open');">
+        🔄 Sync Vitals to Dashboard
+      </button>
+      <button type="button" class="btn btn-outline btn-sm btn-modal-close">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL 3: LOG NEW VITALS ==================== -->
+<div class="modal-backdrop" id="modal-add-vital">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>➕ Log Health Vitals</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-add-vital').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-log-vital" onsubmit="event.preventDefault();">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Systolic BP (mmHg)</label>
+            <input type="number" id="log-sys" class="form-control" value="120">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Diastolic BP (mmHg)</label>
+            <input type="number" id="log-dia" class="form-control" value="80">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Oxygen SpO2 (%)</label>
+            <input type="number" step="0.1" id="log-o2" class="form-control" value="98.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Blood Sugar (mg/dL)</label>
+            <input type="number" step="0.1" id="log-sugar" class="form-control" value="95.0">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Body Weight (kg)</label>
+            <input type="number" step="0.1" id="log-weight" class="form-control" value="68.0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Heart Rate (BPM)</label>
+            <input type="number" id="log-hr" class="form-control" value="72">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Hemoglobin (g/dL)</label>
+          <input type="number" step="0.1" id="log-hb" class="form-control" value="14.2">
+        </div>
+
+        <button type="button" class="btn btn-primary" style="width:100%; padding:12px;" onclick="
+          const data = {
+            bp_systolic: document.getElementById('log-sys').value,
+            bp_diastolic: document.getElementById('log-dia').value,
+            o2_saturation: document.getElementById('log-o2').value,
+            sugar_level: document.getElementById('log-sugar').value,
+            weight: document.getElementById('log-weight').value,
+            heart_rate: document.getElementById('log-hr').value,
+            blood_percentage: document.getElementById('log-hb').value,
+            source: 'Patient Self Logged'
+          };
+          fetch('/api/vitals/add/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          }).then(res => res.json()).then(data => {
+            alert(data.message);
+            document.getElementById('modal-add-vital').classList.remove('open');
+            if(window.VitalsChartEngine) VitalsChartEngine.fetchAndRenderAll();
+          });
+        ">
+          Save & Update Telemetry Charts
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL 4: ADD HOSPITAL VISIT RECORD ==================== -->
+<div class="modal-backdrop" id="modal-add-record">
+  <div class="modal-card" style="max-width:600px;">
+    <div class="modal-header">
+      <h3>➕ Add Hospital Visit Record</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-add-record').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-add-record" onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label class="form-label">Hospital Name</label>
+          <input type="text" id="rec-hospital" class="form-control" value="All India Institute of Medical Sciences (AIIMS) New Delhi">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input type="text" id="rec-dept" class="form-control" value="General Medicine & Family Health">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Attending Doctor</label>
+            <input type="text" id="rec-doctor" class="form-control" value="Dr. Rajesh Kumar Sharma">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason for Visit</label>
+          <input type="text" id="rec-reason" class="form-control" value="Quarterly Routine Health & Vitals Assessment">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Clinical Diagnosis</label>
+          <textarea id="rec-diagnosis" class="form-control" rows="2">Vitals within normal limits. Blood pressure and oxygen levels optimal. Advised light exercise.</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Treatment & Doctor Advice</label>
+          <textarea id="rec-treatment" class="form-control" rows="2">Continue balanced hydration, seasonal diet, and multivitamins.</textarea>
+        </div>
+
+        <button type="button" class="btn btn-primary" style="width:100%; padding:12px;" onclick="
+          const data = {
+            hospital_name: document.getElementById('rec-hospital').value,
+            department: document.getElementById('rec-dept').value,
+            doctor_name: document.getElementById('rec-doctor').value,
+            reason: document.getElementById('rec-reason').value,
+            diagnosis: document.getElementById('rec-diagnosis').value,
+            treatment: document.getElementById('rec-treatment').value,
+            bp_systolic: 120,
+            bp_diastolic: 80,
+            o2_saturation: 98.5,
+            sugar_level: 95.0,
+            weight: 68.0,
+            heart_rate: 72,
+            blood_percentage: 14.2
+          };
+          fetch('/api/records/add/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+          }).then(res => res.json()).then(data => {
+            alert(data.message);
+            document.getElementById('modal-add-record').classList.remove('open');
+            window.location.reload();
+          });
+        ">
+          Save Medical Record
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL 5: 💊 AI MEDICINE SCANNER & PRESCRIPTION MATCHER ==================== -->
+<div class="modal-backdrop" id="modal-ai-medicine-scanner">
+  <div class="modal-card" style="max-width:720px; max-height:88vh; overflow-y:auto;">
+    <div class="modal-header" style="background:linear-gradient(135deg, #0b2545 0%, #134074 100%); color:#ffffff; padding:16px 20px;">
+      <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:1.15rem; color:#ffffff;">
+        <span>💊</span> AI Medicine Scanner & Prescription Matching Engine
+      </h3>
+      <button type="button" class="modal-close-btn" style="color:#ffffff;" onclick="closeSmartAiModal('modal-ai-medicine-scanner');">&times;</button>
+    </div>
+
+    <div class="modal-body" style="padding:22px;">
+      <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:16px;">
+        Scan or photograph your tablet strip / syrup bottle to identify medicine details and cross-verify with your active doctor-issued prescriptions.
+      </p>
+
+      <!-- Input Mode Switcher: Camera / Upload / Manual -->
+      <div style="display:flex; gap:8px; margin-bottom:16px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+        <button type="button" class="btn btn-sm btn-primary" id="btn-tab-cam" onclick="switchScannerMode('upload');" style="font-weight:700; font-size:0.82rem;">
+          📸 Photo Upload / Camera
+        </button>
+        <button type="button" class="btn btn-sm btn-outline" id="btn-tab-manual" onclick="switchScannerMode('manual');" style="font-weight:700; font-size:0.82rem;">
+          ⌨️ Type Medicine Name
+        </button>
+      </div>
+
+      <!-- Upload / Camera Dropzone -->
+      <div id="scanner-upload-box" style="border:2px dashed #0b3b60; border-radius:12px; padding:22px; text-align:center; background:#f0f7fc; margin-bottom:16px; cursor:pointer;" onclick="document.getElementById('med-file-input').click();">
+        <input type="file" id="med-file-input" accept="image/*" style="display:none;" capture="environment" onchange="handleMedicineImageUpload(event);">
+        <div style="font-size:2.4rem; margin-bottom:6px;">📸</div>
+        <strong style="color:var(--primary-navy); font-size:0.95rem; display:block;">Click to Take Photo or Upload Tablet Image</strong>
+        <span style="font-size:0.8rem; color:#64748b;">Supports JPEG, PNG, WEBP tablet strip photos</span>
+        <div id="med-preview-container" style="margin-top:12px; display:none;">
+          <img id="med-preview-img" src="" alt="Medicine Photo" style="max-height:140px; border-radius:8px; border:2px solid #0b3b60;">
+        </div>
+      </div>
+
+      <!-- Manual Input Box -->
+      <div id="scanner-manual-box" style="display:none; margin-bottom:16px;">
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="manual-med-input" class="form-control" placeholder="Enter medicine name (e.g. Paracetamol 650mg, Metformin, Pantoprazole 40mg)...">
+          <button type="button" class="btn btn-primary" onclick="scanMedicineQuery(document.getElementById('manual-med-input').value);" style="font-weight:700; white-space:nowrap;">
+            🔍 Analyze
+          </button>
+        </div>
+      </div>
+
+      <!-- Preset Quick Samples -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:0.8rem; font-weight:700; color:var(--primary-navy); margin-bottom:8px;">
+          Or Select a Sample Medicine Strip to Test:
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm btn-outline" onclick="scanMedicineQuery('Paracetamol 650mg');" style="font-size:0.78rem;">💊 Paracetamol 650mg</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="scanMedicineQuery('Metformin 500mg');" style="font-size:0.78rem;">💊 Metformin 500mg</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="scanMedicineQuery('Pantoprazole 40mg');" style="font-size:0.78rem;">💊 Pantoprazole 40mg</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="scanMedicineQuery('Telmisartan 40mg');" style="font-size:0.78rem;">💊 Telmisartan 40mg</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="scanMedicineQuery('Amoxicillin 500mg');" style="font-size:0.78rem;">💊 Amoxicillin 500mg</button>
+        </div>
+      </div>
+
+      <!-- Progress Spinner -->
+      <div id="med-scanner-loading" style="display:none; text-align:center; padding:18px 0;">
+        <div style="font-size:1.8rem; animation:spin 1s infinite linear;">🔍</div>
+        <div style="font-size:0.92rem; font-weight:700; color:var(--primary-navy); margin-top:6px;">AI Optical Engine Analyzing Medicine...</div>
+        <div style="font-size:0.8rem; color:#64748b;">Identifying Active Generic Formulation & Cross-Matching Prescriptions</div>
+      </div>
+
+      <!-- Results Container -->
+      <div id="med-scanner-results" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL 6: 🧪 AI LAB REPORT EXPLAINER ==================== -->
+<div class="modal-backdrop" id="modal-ai-lab-explainer">
+  <div class="modal-card" style="max-width:760px; max-height:88vh; overflow-y:auto;">
+    <div class="modal-header" style="background:linear-gradient(135deg, #0f766e 0%, #0d9488 100%); color:#ffffff; padding:16px 20px;">
+      <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:1.15rem; color:#ffffff;">
+        <span>🧪</span> AI Laboratory Report Explainer & Trend Analyzer
+      </h3>
+      <button type="button" class="modal-close-btn" style="color:#ffffff;" onclick="closeSmartAiModal('modal-ai-lab-explainer');">&times;</button>
+    </div>
+
+    <div class="modal-body" style="padding:22px;">
+      <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:16px;">
+        Upload or photograph any lab report (CBC, Lipid Panel, Blood Sugar, KFT, LFT, Thyroid) for a patient-friendly 5-point explanation and trajectory analysis.
+      </p>
+
+      <!-- Upload / Sample Selection Box -->
+      <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:14px; margin-bottom:18px;">
+        <div style="border:2px dashed #0d9488; border-radius:10px; padding:18px; text-align:center; background:#f0fdfa; cursor:pointer;" onclick="document.getElementById('lab-file-input').click();">
+          <input type="file" id="lab-file-input" accept="image/*,application/pdf" style="display:none;" onchange="handleLabReportUpload(event);">
+          <div style="font-size:1.8rem; margin-bottom:4px;">📄</div>
+          <strong style="color:#0f766e; font-size:0.9rem;">Upload PDF / Photo of Lab Report</strong>
+          <div style="font-size:0.75rem; color:#64748b;">OCR automatically extracts values & ranges</div>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+          <label style="font-size:0.8rem; font-weight:700; color:var(--primary-navy); display:block; margin-bottom:6px;">Or Test Sample Report:</label>
+          <select id="select-sample-lab" class="form-select" style="font-size:0.82rem; padding:6px 10px; margin-bottom:8px;">
+            <option value="cbc_sample">Complete Blood Count (CBC)</option>
+            <option value="lipid_sample">Lipid Profile Panel</option>
+            <option value="diabetes_sample">Fasting Glucose & HbA1c</option>
+            <option value="renal_sample">Kidney Function (KFT)</option>
+            <option value="critical_sample">🚨 Sample with Critical Alert</option>
+          </select>
+          <button type="button" class="btn btn-sm btn-emerald" style="width:100%; font-size:0.8rem; font-weight:700;" onclick="explainSampleLab(document.getElementById('select-sample-lab').value);">
+            Analyze Sample Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Spinner -->
+      <div id="lab-explainer-loading" style="display:none; text-align:center; padding:18px 0;">
+        <div style="font-size:1.8rem; animation:spin 1s infinite linear;">🔬</div>
+        <div style="font-size:0.92rem; font-weight:700; color:#0f766e; margin-top:6px;">AI Diagnostic Engine Parsing Report...</div>
+        <div style="font-size:0.8rem; color:#64748b;">Extracting test markers, units, and physiological reference bands</div>
+      </div>
+
+      <!-- Results Container -->
+      <div id="lab-explainer-results" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL 7: 📋 AI PRESCRIPTION EXPLAINER ==================== -->
+<div class="modal-backdrop" id="modal-ai-prescription-explainer">
+  <div class="modal-card" style="max-width:680px; max-height:88vh; overflow-y:auto;">
+    <div class="modal-header" style="background:linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color:#ffffff; padding:16px 20px;">
+      <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:1.15rem; color:#ffffff;">
+        <span>📋</span> AI Doctor Prescription Explainer
+      </h3>
+      <button type="button" class="modal-close-btn" style="color:#ffffff;" onclick="closeSmartAiModal('modal-ai-prescription-explainer');">&times;</button>
+    </div>
+
+    <div class="modal-body" style="padding:22px;">
+      <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:16px;">
+        View a plain-language summary of all your active doctor-issued prescriptions, timing schedules, and food instructions.
+      </p>
+
+      <div id="prescription-explainer-content">
+        <div style="text-align:center; padding:20px; color:#64748b;">
+          Loading your active doctor prescriptions...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL 8: 📈 AI HEALTH TRENDS EXPLAINER ==================== -->
+<div class="modal-backdrop" id="modal-ai-health-trends">
+  <div class="modal-card" style="max-width:680px; max-height:88vh; overflow-y:auto;">
+    <div class="modal-header" style="background:linear-gradient(135deg, #4338ca 0%, #6366f1 100%); color:#ffffff; padding:16px 20px;">
+      <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:1.15rem; color:#ffffff;">
+        <span>📈</span> AI Health Trends & Vitals Trajectory
+      </h3>
+      <button type="button" class="modal-close-btn" style="color:#ffffff;" onclick="closeSmartAiModal('modal-ai-health-trends');">&times;</button>
+    </div>
+
+    <div class="modal-body" style="padding:22px;">
+      <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:16px;">
+        Evaluates your 6 key health vitals (Blood Pressure, SpO2, Sugar, Weight, Hemoglobin) over time and prepares suggested questions for your doctor.
+      </p>
+
+      <div id="health-trends-content">
+        <div style="text-align:center; padding:20px; color:#64748b;">
+          Analyzing your health telemetry trajectory...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL 9: 💬 ASK ABOUT MY REPORT (INTERACTIVE AI Q&A) ==================== -->
+<div class="modal-backdrop" id="modal-ai-ask-report">
+  <div class="modal-card" style="max-width:640px; max-height:88vh; display:flex; flex-direction:column;">
+    <div class="modal-header" style="background:linear-gradient(135deg, #0b2545 0%, #134074 100%); color:#ffffff; padding:16px 20px;">
+      <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:1.15rem; color:#ffffff;">
+        <span>💬</span> Ask Smart Health Assistant About Your Report
+      </h3>
+      <button type="button" class="modal-close-btn" style="color:#ffffff;" onclick="closeSmartAiModal('modal-ai-ask-report');">&times;</button>
+    </div>
+
+    <div class="modal-body" style="padding:18px; flex:1; overflow-y:auto;">
+      <!-- Chat history stream -->
+      <div id="ai-chat-history" style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px; min-height:240px;">
+        <div style="background:#f1f5f9; padding:12px 16px; border-radius:12px; font-size:0.86rem; color:#1e293b; max-width:85%; align-self:flex-start;">
+          👋 Namaste! I am your <strong>Smart Health Assistant</strong>. You can ask me to explain medical terms, laboratory parameters (e.g. Hemoglobin, Blood Sugar, SpO2), or how your prescriptions are structured.
+          <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">🛡️ Clinical guardrails active: I do not diagnose diseases or change prescriptions.</div>
+        </div>
+      </div>
+
+      <!-- Quick Suggested Chips -->
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;">
+        <button type="button" class="btn btn-sm btn-outline" onclick="sendChatPrompt('What does a low hemoglobin level mean?');" style="font-size:0.75rem; padding:4px 8px;">🩸 Hemoglobin Meaning</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="sendChatPrompt('What is the normal fasting blood sugar range?');" style="font-size:0.75rem; padding:4px 8px;">🍬 Blood Sugar Range</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="sendChatPrompt('Why should Pantoprazole be taken before breakfast?');" style="font-size:0.75rem; padding:4px 8px;">💊 Pantoprazole Timing</button>
+      </div>
+
+      <!-- Chat input bar -->
+      <form id="form-ai-chat" onsubmit="event.preventDefault(); submitChatQuestion();" style="display:flex; gap:8px;">
+        <input type="text" id="ai-chat-input" class="form-control" placeholder="Ask a question about your reports, vitals, or tablets..." style="font-size:0.88rem;" required>
+        <button type="submit" class="btn btn-primary" style="font-weight:700; white-space:nowrap; padding:0 18px;">
+          Send ↗
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

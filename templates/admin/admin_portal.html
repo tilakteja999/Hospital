@@ -1,0 +1,1112 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Hospital & Medical Staff Management Portal | Government of India{% endblock %}
+
+{% block content %}
+<div class="dashboard-container" style="padding-bottom: 60px;">
+  
+  <!-- SLEEK TOP NAVIGATION BAR FOR ADMIN PORTAL (SINGLE ROW NO WRAP) -->
+  <nav class="top-bar-2" style="background:#0b2545; padding: 6px 14px; border-radius:10px; margin-bottom:22px; display:flex; gap:6px; flex-wrap:nowrap; overflow-x:auto; white-space:nowrap; align-items:center; box-shadow: 0 4px 14px rgba(11,37,69,0.15); scrollbar-width:thin;" aria-label="Admin Navigation">
+    <div style="color:#ffffff; font-weight:800; font-size:1.05rem; margin-right:12px; display:flex; align-items:center; gap:6px; flex-shrink:0;">
+      <span>🏛️</span> Admin Portal
+    </div>
+
+    <button type="button" class="btn btn-admin-tab active" data-tab="home" style="font-weight:700; padding:8px 16px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:var(--accent-saffron); color:#ffffff; border:none; cursor:pointer;">
+      <span>🏠</span> Home Dashboard
+    </button>
+    <button type="button" class="btn btn-admin-tab" data-tab="hospitals" style="font-weight:700; padding:8px 16px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>🏥</span> Hospitals Directory
+      <span class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; padding:2px 8px; border-radius:12px; font-size:0.75rem;">{{ total_hospitals_count }}</span>
+    </button>
+    <button type="button" class="btn btn-admin-tab" data-tab="verification" style="font-weight:700; padding:8px 16px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>🔍</span> Doctor Verification
+      <span class="badge" style="background:#ef4444; color:#ffffff; padding:2px 8px; border-radius:12px; font-size:0.75rem;">{{ pending_verification_doctors }}</span>
+    </button>
+    <button type="button" class="btn btn-admin-tab" data-tab="doctors" style="font-weight:700; padding:8px 16px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>👨‍⚕️</span> Doctors Management
+      <span class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; padding:2px 8px; border-radius:12px; font-size:0.75rem;">{{ total_doctors }}</span>
+    </button>
+    <button type="button" class="btn btn-admin-tab" data-tab="appointments" style="font-weight:700; padding:8px 16px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>📊</span> Appointments Analytics
+      <span class="badge" style="background:rgba(255,255,255,0.2); color:#ffffff; padding:2px 8px; border-radius:12px; font-size:0.75rem;">{{ total_appointments_all_time }}</span>
+    </button>
+    <button type="button" class="btn btn-admin-tab" data-tab="audit" style="font-weight:700; padding:8px 16px; border-radius:6px; font-size:0.88rem; display:flex; align-items:center; gap:6px; background:transparent; color:#ffffff; border:none; cursor:pointer;">
+      <span>📜</span> Audit Logs
+    </button>
+
+    <!-- Role Switcher -->
+    <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+      <a href="{% url 'hospital_portal' %}" class="btn btn-sm" style="background:rgba(255,255,255,0.12); color:#ffffff; font-size:0.75rem; padding:4px 10px; border-radius:20px;">🏥 Hospital Admin</a>
+      <a href="{% url 'doctor_portal' %}" class="btn btn-sm" style="background:rgba(255,255,255,0.12); color:#ffffff; font-size:0.75rem; padding:4px 10px; border-radius:20px;">👨‍⚕️ Doctor</a>
+    </div>
+  </nav>
+
+  <!-- ==================== TAB 1: HOME (KPIS + SINGLE DYNAMIC GRAPH) ==================== -->
+  <div class="admin-tab-pane active" id="pane-admin-home">
+    
+    <!-- Top Stats Cards -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 24px;">
+      <div class="vital-card" style="border-left: 4px solid var(--primary-navy); padding: 18px 20px;">
+        <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Total Doctors in Hospital</div>
+        <div style="font-size:2rem; font-weight:800; color:var(--primary-navy); margin:4px 0 2px 0;">{{ total_doctors }}</div>
+        <div style="font-size:0.82rem; color:var(--accent-emerald); font-weight:600;">
+          🟢 {{ present_doctors_count }} Present Today • 🔴 {{ absent_doctors_count }} On Leave
+        </div>
+      </div>
+
+      <div class="vital-card" style="border-left: 4px solid var(--accent-emerald); padding: 18px 20px;">
+        <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Patients Attended Today</div>
+        <div style="font-size:2rem; font-weight:800; color:var(--accent-emerald); margin:4px 0 2px 0;">{{ today_completed_count }}</div>
+        <div style="font-size:0.82rem; color:var(--text-muted);">
+          Completed consultations until present time
+        </div>
+      </div>
+
+      <div class="vital-card" style="border-left: 4px solid var(--accent-saffron); padding: 18px 20px;">
+        <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Today's OPD Queue</div>
+        <div style="font-size:2rem; font-weight:800; color:var(--accent-saffron); margin:4px 0 2px 0;">{{ today_total_count }}</div>
+        <div style="font-size:0.82rem; color:var(--text-muted);">
+          ⏳ {{ today_pending_count }} Pending / In Consultation
+        </div>
+      </div>
+
+      <div class="vital-card" style="border-left: 4px solid #4361ee; padding: 18px 20px;">
+        <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Total Master Appointments</div>
+        <div style="font-size:2rem; font-weight:800; color:#4361ee; margin:4px 0 2px 0;">{{ total_appointments_all_time }}</div>
+        <div style="font-size:0.82rem; color:var(--text-muted);">
+          Across all departments & hospitals
+        </div>
+      </div>
+    </div>
+
+    <!-- SINGLE INTERACTIVE APPOINTMENTS GRAPH WITH YEAR, MONTH, WEEK, DAY BUTTONS -->
+    <div class="vital-card" style="padding: 24px; margin-bottom: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>📈</span> National Hospital Appointments Telemetry
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Interactive patient volume analytics. Click timeframe buttons to view trends by <strong>Year, Month, Week, or Day</strong>.
+          </p>
+        </div>
+
+        <!-- Timeframe Selector Buttons (Year, Month, Week, Day) -->
+        <div style="display:flex; gap:6px; background:#f1f5f9; padding:4px; border-radius:10px;" id="home-chart-timeframe-btns">
+          <button type="button" class="btn btn-sm btn-timeframe" data-period="year" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:8px; border:none; background:#ffffff; color:var(--primary-navy); box-shadow:0 1px 3px rgba(0,0,0,0.1); cursor:pointer;">
+            📅 Year
+          </button>
+          <button type="button" class="btn btn-sm btn-timeframe active" data-period="month" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:8px; border:none; background:var(--primary-navy); color:#ffffff; cursor:pointer;">
+            🗓️ Month
+          </button>
+          <button type="button" class="btn btn-sm btn-timeframe" data-period="week" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:8px; border:none; background:#ffffff; color:var(--primary-navy); cursor:pointer;">
+            📆 Week
+          </button>
+          <button type="button" class="btn btn-sm btn-timeframe" data-period="day" style="font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:8px; border:none; background:#ffffff; color:var(--primary-navy); cursor:pointer;">
+            🕒 Day
+          </button>
+        </div>
+      </div>
+
+      <div style="position:relative; height:340px;">
+        <canvas id="admin-home-telemetry-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Complete Overview: All 20 Human Hospital Doctor Specializations Breakdown -->
+    <div class="vital-card" style="padding: 22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 16px;">
+        <div>
+          <h3 style="font-size:1.15rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>📊</span> Department OPD Distribution Summary (All Human Hospital Specialties)
+          </h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+            Live doctor availability, total registered appointments, and today's attended OPD consultations across all hospital departments.
+          </p>
+        </div>
+        <span class="badge" style="background:#e0f2fe; color:#0369a1; padding:6px 14px; font-weight:700; font-size:0.82rem;">
+          {{ dept_stats|length }} Medical Specialties
+        </span>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+        {% for ds in dept_stats %}
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong style="color:var(--primary-navy); font-size:0.92rem;">{{ ds.label }}</strong>
+            <span class="badge" style="background:{% if ds.doctor_count > 0 %}#e0f2fe{% else %}#fee2e2{% endif %}; color:{% if ds.doctor_count > 0 %}#0369a1{% else %}#b91c1c{% endif %}; font-size:0.75rem;">
+              {{ ds.doctor_count }} Doctors
+            </span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.82rem; color:var(--text-muted);">
+            <span>Total Appointments:</span>
+            <strong style="color:#1d4ed8;">{{ ds.total_appointments }}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+            <span>Attended Today:</span>
+            <strong style="color:var(--accent-emerald);">{{ ds.today_completed }}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.78rem; color:var(--text-muted); margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">
+            <span>Duty Status Today:</span>
+            <span style="font-weight:700; color:{% if ds.doctor_count > 0 %}#15803d{% else %}#94a3b8{% endif %};">
+              {% if ds.doctor_count > 0 %}🟢 Active On Duty{% else %}⚪ No Duty Staff{% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== TAB: HOSPITALS DIRECTORY ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-hospitals" style="display:none;">
+    <div class="vital-card" style="padding: 24px; margin-bottom: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 18px;">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px; margin:0;">
+            <span>🏥</span> National Registered Hospitals Directory
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Register new hospital facilities, assign hospital administrators, edit resource matrix, and monitor operational status.
+          </p>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('modal-add-hospital').style.display='flex';" style="background:#0b2545; color:#fff;">
+          + Register New Hospital Facility
+        </button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse: collapse; font-size:0.88rem;">
+          <thead>
+            <tr style="background:#f8fafc; text-align:left; border-bottom:2px solid #e2e8f0; color:var(--primary-navy);">
+              <th style="padding:12px;">Hospital Name & License</th>
+              <th style="padding:12px;">Type & Location</th>
+              <th style="padding:12px;">Contact & Email</th>
+              <th style="padding:12px; text-align:center;">Bed Occupancy</th>
+              <th style="padding:12px; text-align:center;">Status</th>
+              <th style="padding:12px; text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in all_hospitals %}
+            <tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:12px;">
+                <div style="font-weight:700; color:var(--primary-navy);">{{ h.name }}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted);">Lic: {{ h.license_number }}</div>
+              </td>
+              <td style="padding:12px;">
+                <div>{{ h.facility_type }}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted);">📍 {{ h.city }}, {{ h.state }}</div>
+              </td>
+              <td style="padding:12px;">
+                <div>{{ h.contact_phone }}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted);">{{ h.email }}</div>
+              </td>
+              <td style="padding:12px; text-align:center;">
+                <span style="font-weight:700; color:#0284c7;">{{ h.resource_status.total_occupied|default:0 }} / {{ h.resource_status.total_beds|default:h.total_beds }} Beds</span>
+              </td>
+              <td style="padding:12px; text-align:center;">
+                {% if h.status == 'ACTIVE' %}
+                <span class="vital-status-pill success" style="font-size:0.75rem;">Active & Verified</span>
+                {% else %}
+                <span class="vital-status-pill warning" style="font-size:0.75rem;">{{ h.status }}</span>
+                {% endif %}
+              </td>
+              <td style="padding:12px; text-align:right;">
+                <button class="btn btn-sm btn-outline" onclick="toggleHospitalStatus({{ h.id }}, '{% if h.status == "ACTIVE" %}SUSPENDED{% else %}ACTIVE{% endif %}')">
+                  {% if h.status == 'ACTIVE' %}Suspend Facility{% else %}Activate Facility{% endif %}
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: DOCTOR VERIFICATION ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-verification" style="display:none;">
+    <div class="vital-card" style="padding: 24px; margin-bottom: 24px;">
+      <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; margin-bottom: 6px; display:flex; align-items:center; gap:8px;">
+        <span>🔍</span> Government Medical Council Credentials Verification
+      </h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 18px;">
+        Approve or reject doctor license registrations submitted by hospital administrators across India.
+      </p>
+
+      <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse: collapse; font-size:0.88rem;">
+          <thead>
+            <tr style="background:#f8fafc; text-align:left; border-bottom:2px solid #e2e8f0;">
+              <th style="padding:12px;">Doctor Name & Reg ID</th>
+              <th style="padding:12px;">Hospital & Department</th>
+              <th style="padding:12px;">Qualification & Exp</th>
+              <th style="padding:12px;">Verification Status</th>
+              <th style="padding:12px; text-align:right;">Verification Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in all_doctors %}
+            <tr style="border-bottom:1px solid #f1f5f9;">
+              <td style="padding:12px;">
+                <div style="font-weight:700; color:var(--primary-navy);">Dr. {{ d.name }}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted);">Registration ID: {{ d.doctor_reg_id }}</div>
+              </td>
+              <td style="padding:12px;">
+                <div>{{ d.hospital.name }}</div>
+                <div style="font-size:0.78rem; color:#0284c7;">{{ d.department }}</div>
+              </td>
+              <td style="padding:12px;">
+                <div>{{ d.qualification }}</div>
+                <div style="font-size:0.78rem; color:var(--text-muted);">{{ d.experience_years }} Years Experience</div>
+              </td>
+              <td style="padding:12px;">
+                {% if d.verification_status == 'VERIFIED' %}
+                <span class="vital-status-pill success">Verified Credentials</span>
+                {% elif d.verification_status == 'PENDING_VERIFICATION' %}
+                <span class="vital-status-pill warning">Pending Approval</span>
+                {% else %}
+                <span class="vital-status-pill danger">Rejected</span>
+                {% endif %}
+              </td>
+              <td style="padding:12px; text-align:right;">
+                {% if d.verification_status == 'PENDING_VERIFICATION' %}
+                <button class="btn btn-sm btn-primary" style="background:#10b981; border:none;" onclick="verifyDoctor({{ d.id }}, 'VERIFIED')">Approve & Verify</button>
+                <button class="btn btn-sm btn-outline" style="color:#ef4444;" onclick="verifyDoctor({{ d.id }}, 'REJECTED')">Reject</button>
+                {% else %}
+                <span style="font-size:0.8rem; color:var(--text-muted);">No action needed</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: DOCTORS MANAGEMENT ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-doctors" style="display:none;">
+    <div class="vital-card" style="padding: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color);">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>👨‍⚕️</span> Hospital Doctors & Roster Management
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Manage doctor presence in hospital, view patients attended today until present time, add or remove doctors according to duty.
+          </p>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('modal-add-doctor').classList.add('open');" style="display:flex; align-items:center; gap:6px;">
+            <span>➕</span> Add New Doctor
+          </button>
+        </div>
+      </div>
+
+      <!-- Doctor Table Filter Bar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="text" id="admin-doc-search" placeholder="Search doctor by name, ID or department..." class="form-control" style="max-width:320px; font-size:0.85rem; padding:8px 12px;">
+          <select id="admin-doc-dept-filter" class="form-select" style="max-width:220px; font-size:0.85rem; padding:8px 12px;">
+            <option value="">All Specializations</option>
+            {% for code, label in all_doctors.0.DEPARTMENT_CHOICES %}
+            <option value="{{ code }}">{{ code }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="font-size:0.82rem; color:var(--text-muted);">
+          Showing <strong id="admin-doc-count-display">{{ all_doctors.count }}</strong> registered hospital doctors
+        </div>
+      </div>
+
+      <!-- Doctor List Table -->
+      <div style="overflow-x: auto;">
+        <table class="data-table" id="admin-doctors-table" style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background:#f1f5f9; text-align:left; font-size:0.82rem; color:var(--primary-navy); text-transform:uppercase;">
+              <th style="padding:12px 14px; border-radius:6px 0 0 6px;">Doctor ID</th>
+              <th style="padding:12px 14px;">Doctor Name</th>
+              <th style="padding:12px 14px;">Type / Specialization</th>
+              <th style="padding:12px 14px;">Hospital Facility</th>
+              <th style="padding:12px 14px; text-align:center;">Duty Status</th>
+              <th style="padding:12px 14px; text-align:center; background:rgba(0,168,107,0.08); color:var(--accent-emerald);">Patients Taken Today</th>
+              <th style="padding:12px 14px; text-align:center;">All-Time Patients</th>
+              <th style="padding:12px 14px; text-align:right; border-radius:0 6px 6px 0;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-doctors-tbody">
+            {% for doc in all_doctors %}
+            <tr style="border-bottom:1px solid #eef2f6; font-size:0.9rem;" data-dept="{{ doc.department }}" data-name="{{ doc.name|lower }}" data-id="{{ doc.doctor_reg_id|lower }}">
+              <td style="padding:14px; font-weight:700; color:var(--primary-navy);">
+                <span class="brand-badge" style="font-family: monospace; font-size:0.8rem;">{{ doc.doctor_reg_id|default:"DOC-AIIMS-1049" }}</span>
+              </td>
+              <td style="padding:14px;">
+                <div style="font-weight:700; color:var(--primary-navy);">{{ doc.name }}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">{{ doc.qualification }} • {{ doc.designation }}</div>
+              </td>
+              <td style="padding:14px;">
+                <span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.78rem; font-weight:600; background:#e0f2fe; color:#0369a1;">
+                  {{ doc.department }}
+                </span>
+              </td>
+              <td style="padding:14px; font-size:0.85rem; color:var(--text-muted);">
+                {{ doc.hospital.name }}
+              </td>
+              <td style="padding:14px; text-align:center;">
+                <button type="button" class="btn btn-sm btn-toggle-presence" data-id="{{ doc.id }}" data-present="{{ doc.is_present_today|lower }}" style="padding:4px 12px; font-size:0.78rem; border-radius:20px; font-weight:700; cursor:pointer; {% if doc.is_present_today %}background:#dcfce7; color:#15803d; border:1px solid #86efac;{% else %}background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5;{% endif %}">
+                  {% if doc.is_present_today %}🟢 Present in Hospital{% else %}🔴 Off Duty / Absent{% endif %}
+                </button>
+              </td>
+              <td style="padding:14px; text-align:center; background:rgba(0,168,107,0.03);">
+                <span style="font-size:1.15rem; font-weight:800; color:var(--accent-emerald); background:rgba(0,168,107,0.12); padding:4px 14px; border-radius:30px; display:inline-block;" title="Patients completed by {{ doc.name }} today until present time">
+                  {{ doc.patients_taken_today_count }}
+                </span>
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">/ {{ doc.max_daily_slots }} slots</div>
+              </td>
+              <td style="padding:14px; text-align:center; font-weight:700; color:var(--primary-navy);">
+                {{ doc.total_patients_taken_count }}
+              </td>
+              <td style="padding:14px; text-align:right;">
+                <button type="button" class="btn btn-sm btn-outline btn-remove-doctor" data-id="{{ doc.id }}" data-name="{{ doc.name }}" style="color:#dc2626; border-color:#fca5a5; padding:4px 10px; font-size:0.78rem;" title="Remove doctor from hospital">
+                  🗑️ Remove
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: APPOINTMENTS (TOTAL, PRE, COMPLETED, UNCOMPLETED, TIMEFRAME & TYPE FILTERS) ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-appointments" style="display:none;">
+    
+    <!-- Summary Counters for Appointments -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 22px;">
+      <div class="vital-card" style="border-left: 4px solid #4361ee; padding: 16px 18px;">
+        <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Total Appointments</div>
+        <div style="font-size:1.9rem; font-weight:800; color:#4361ee; margin:3px 0;">{{ total_appointments_all_time }}</div>
+        <div style="font-size:0.8rem; color:var(--text-muted);">All-time registered</div>
+      </div>
+
+      <div class="vital-card" style="border-left: 4px solid #f59e0b; padding: 16px 18px;">
+        <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Pre-Appointments (Upcoming)</div>
+        <div style="font-size:1.9rem; font-weight:800; color:#d97706; margin:3px 0;">{{ pre_appointments_count }}</div>
+        <div style="font-size:0.8rem; color:#d97706; font-weight:600;">Confirmed upcoming slots</div>
+      </div>
+
+      <div class="vital-card" style="border-left: 4px solid var(--accent-emerald); padding: 16px 18px;">
+        <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Completed Consultations</div>
+        <div style="font-size:1.9rem; font-weight:800; color:var(--accent-emerald); margin:3px 0;">{{ completed_appointments_count }}</div>
+        <div style="font-size:0.8rem; color:var(--accent-emerald); font-weight:600;">✓ Fully attended</div>
+      </div>
+
+      <div class="vital-card" style="border-left: 4px solid #e63946; padding: 16px 18px;">
+        <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Uncompleted / In-Queue</div>
+        <div style="font-size:1.9rem; font-weight:800; color:#e63946; margin:3px 0;">{{ uncompleted_appointments_count }}</div>
+        <div style="font-size:0.8rem; color:#e63946; font-weight:600;">⏳ Waiting in consultation queue</div>
+      </div>
+    </div>
+
+    <!-- Interactive Appointments Graph (Year / Month / Week / Day) -->
+    <div class="vital-card" style="padding: 22px; margin-bottom: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 16px;">
+        <div>
+          <h3 style="font-size:1.2rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>📈</span> Appointment Flow Analysis (Completed vs Pre-Appointments)
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Filter telemetry dynamically by clicking: <strong>Year, Month, Week, or Day</strong>.
+          </p>
+        </div>
+
+        <div style="display:flex; gap:6px; background:#f1f5f9; padding:4px; border-radius:10px;" id="apts-chart-timeframe-btns">
+          <button type="button" class="btn btn-sm btn-apt-timeframe" data-period="year" style="font-size:0.8rem; font-weight:700; padding:6px 12px; border-radius:8px; border:none; background:#ffffff; color:var(--primary-navy); cursor:pointer;">
+            📅 Year
+          </button>
+          <button type="button" class="btn btn-sm btn-apt-timeframe active" data-period="month" style="font-size:0.8rem; font-weight:700; padding:6px 12px; border-radius:8px; border:none; background:var(--primary-navy); color:#ffffff; cursor:pointer;">
+            🗓️ Month
+          </button>
+          <button type="button" class="btn btn-sm btn-apt-timeframe" data-period="week" style="font-size:0.8rem; font-weight:700; padding:6px 12px; border-radius:8px; border:none; background:#ffffff; color:var(--primary-navy); cursor:pointer;">
+            📆 Week
+          </button>
+          <button type="button" class="btn btn-sm btn-apt-timeframe" data-period="day" style="font-size:0.8rem; font-weight:700; padding:6px 12px; border-radius:8px; border:none; background:#ffffff; color:var(--primary-navy); cursor:pointer;">
+            🕒 Day
+          </button>
+        </div>
+      </div>
+
+      <div style="position:relative; height:280px;">
+        <canvas id="admin-appointments-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Appointment Type / Department / Test Filter Bar -->
+    <div class="vital-card" style="padding: 22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 16px;">
+        <div>
+          <h3 style="font-size:1.15rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>📋</span> Filter Appointments by Medical Type & Diagnostics
+          </h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+            Filter by General OPD, Neurology, Cardiology, Pulmonology, Blood Test, MRI, CT Scan, X-Ray, etc.
+          </p>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="admin-apt-search" placeholder="Search by patient, ref # or token..." class="form-control" style="font-size:0.85rem; padding:8px 12px; max-width:240px;">
+          
+          <select id="admin-apt-type-filter" class="form-select" style="font-size:0.85rem; padding:8px 12px; max-width:260px;">
+            {% for t in appointment_types %}
+            <option value="{{ t.id }}">{{ t.name }}</option>
+            {% endfor %}
+          </select>
+
+          <select id="admin-apt-status-filter" class="form-select" style="font-size:0.85rem; padding:8px 12px; max-width:180px;">
+            <option value="">All Statuses</option>
+            <option value="CONFIRMED">Pre-Appointments (Confirmed)</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Master Appointments Table -->
+      <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse: collapse; font-size:0.88rem;" id="admin-master-apts-table">
+          <thead>
+            <tr style="background:#f8fafc; text-align:left; font-size:0.8rem; color:var(--primary-navy); text-transform:uppercase; border-bottom:2px solid #e2e8f0;">
+              <th style="padding:10px;">Booking Ref</th>
+              <th style="padding:10px;">Patient Name</th>
+              <th style="padding:10px;">Doctor / Type / Service</th>
+              <th style="padding:10px;">Hospital Facility</th>
+              <th style="padding:10px;">Date & Time Slot</th>
+              <th style="padding:10px; text-align:center;">Token</th>
+              <th style="padding:10px; text-align:center;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="admin-master-apts-tbody">
+            {% for b in recent_bookings %}
+            <tr style="border-bottom:1px solid #f1f5f9;" data-type="{{ b.doctor.department }}" data-status="{{ b.status }}" data-text="{{ b.patient.get_display_name|lower }} {{ b.booking_reference|lower }} {{ b.doctor.name|lower }} {{ b.symptoms|lower }}">
+              <td style="padding:10px; font-family:monospace; font-weight:700; color:var(--primary-navy);">{{ b.booking_reference }}</td>
+              <td style="padding:10px; font-weight:600;">{{ b.patient.get_display_name }}<br><span style="font-size:0.75rem; color:var(--text-muted);">{{ b.patient.phone }}</span></td>
+              <td style="padding:10px;">
+                <span style="font-weight:700; color:var(--primary-navy);">{{ b.doctor.name }}</span>
+                <div style="font-size:0.75rem; color:#0369a1; font-weight:600;">{{ b.doctor.department }}</div>
+              </td>
+              <td style="padding:10px; font-size:0.82rem; color:var(--text-muted);">{{ b.hospital.name }}</td>
+              <td style="padding:10px; font-size:0.82rem;"><strong>{{ b.appointment_date|date:"d-M-Y" }}</strong><br>{{ b.time_slot }}</td>
+              <td style="padding:10px; text-align:center; font-weight:800; color:#e63946;">#{{ b.token_number }}</td>
+              <td style="padding:10px; text-align:center;">
+                <span class="vital-status-pill {% if b.status == 'COMPLETED' %}success{% elif b.status == 'CONFIRMED' %}warning{% else %}danger{% endif %}" style="font-size:0.75rem;">
+                  {% if b.status == 'CONFIRMED' %}Pre-Appointment{% else %}{{ b.get_status_display }}{% endif %}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== TAB 4: BOOKINGS & SLOTS MANAGEMENT ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-bookings" style="display:none;">
+    <div class="vital-card" style="padding: 24px;">
+      <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; margin-bottom: 6px; display:flex; align-items:center; gap:8px;">
+        <span>📅</span> Facility OPD Slot Capacities & Schedules
+      </h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 20px;">
+        Overview of daily slot capacities, active hospital timings, and emergency availability across central and state hospitals.
+      </p>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:16px;">
+        {% for h in all_hospitals %}
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+            <h4 style="font-size:1.05rem; color:var(--primary-navy); margin:0; font-weight:700;">{{ h.name }}</h4>
+            <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:0.75rem;">{{ h.get_facility_type_display }}</span>
+          </div>
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:8px;">
+            📍 {{ h.address }} • Area: {{ h.area.area_name }}, {{ h.area.city }}
+          </div>
+          <div style="background:#f8fafc; padding:10px; border-radius:8px; font-size:0.8rem; margin-bottom:10px;">
+            <div>🕒 <strong>OPD Timings:</strong> {{ h.opd_timings }}</div>
+            <div style="margin-top:4px;">🛏️ <strong>Total Beds:</strong> {{ h.total_beds }} • 🚨 <strong>Emergency:</strong> {% if h.emergency_available %}<span style="color:#15803d; font-weight:700;">24x7 Open</span>{% else %}<span style="color:#b91c1c;">Closed</span>{% endif %}</div>
+            <div style="margin-top:4px;">👨‍⚕️ <strong>Active Doctors:</strong> {{ h.doctors.count }} specialists</div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline" style="width:100%; font-size:0.8rem; font-weight:700; color:var(--primary-navy); border-color:#cbd5e1;" onclick="alert('Facility configuration updated successfully.');">
+            ⚙️ Manage Slot Allocations
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 5: NOTIFICATIONS & ALERTS ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-notifications" style="display:none;">
+    <div class="vital-card" style="padding: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>🔔</span> National Health Advisories & System Broadcasts
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Broadcast official health alerts, immunization drives, and doctor duty advisories across the hospital network.
+          </p>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="alert('Official health broadcast memo initiated across all registered citizens & doctors.');" style="font-weight:700; font-size:0.88rem;">
+          📢 Broadcast New Health Advisory
+        </button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="background:#eff6ff; border-left:4px solid #3b82f6; border-radius:8px; padding:14px 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#1e40af; font-size:0.95rem;">📢 Seasonal Influenza & Respiratory OPD Precaution</strong>
+            <span style="font-size:0.75rem; color:#64748b;">Active Advisory</span>
+          </div>
+          <p style="font-size:0.85rem; color:#334155; margin:6px 0 0 0;">
+            All government hospital OPDs instructed to maintain dedicated triage counters for respiratory cases. SpO2 saturation check mandatory at entry.
+          </p>
+        </div>
+
+        <div style="background:#f0fdf4; border-left:4px solid #22c55e; border-radius:8px; padding:14px 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#166534; font-size:0.95rem;">💉 National Immunization Drive (Mission Indradhanush)</strong>
+            <span style="font-size:0.75rem; color:#64748b;">Active Campaign</span>
+          </div>
+          <p style="font-size:0.85rem; color:#334155; margin:6px 0 0 0;">
+            Zero-wait vaccination priority enabled for pediatric doses (DPT, MR, Pentavalent) across all CHCs and District Hospitals.
+          </p>
+        </div>
+
+        <div style="background:#fffbeb; border-left:4px solid #f59e0b; border-radius:8px; padding:14px 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#b45309; font-size:0.95rem;">⚠️ High OPD Footfall Notice (AIIMS & Safdarjung)</strong>
+            <span style="font-size:0.75rem; color:#64748b;">Operations Alert</span>
+          </div>
+          <p style="font-size:0.85rem; color:#334155; margin:6px 0 0 0;">
+            Morning queue allocation expanded by 20% to accommodate pre-appointments and digital token registrations.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 4: AUDIT LOGS (IMMUTABLE ACCESS LEDGER) ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-audit" style="display:none;">
+    <div class="vital-card" style="padding: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color);">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>📜</span> Immutable Digital Health Audit Ledger
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Append-only security log tracking all access, consultations, consent grants, and clinical actions with client IP and timestamps.
+          </p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline" onclick="loadAuditLogs();" style="display:flex; align-items:center; gap:6px; font-weight:700;">
+          🔄 Refresh Audit Feed
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <input type="text" id="audit-search" placeholder="Search by user, action, IP, resource..." class="form-control" style="max-width:280px; font-size:0.85rem; padding:8px 12px;">
+        <select id="audit-role-filter" class="form-select" style="max-width:180px; font-size:0.85rem; padding:8px 12px;">
+          <option value="">All Roles</option>
+          <option value="DOCTOR">Doctor</option>
+          <option value="PATIENT">Patient / Citizen</option>
+          <option value="ADMIN">Admin</option>
+          <option value="SYSTEM">System</option>
+        </select>
+        <select id="audit-action-filter" class="form-select" style="max-width:220px; font-size:0.85rem; padding:8px 12px;">
+          <option value="">All Actions</option>
+          <option value="LOGIN">User Login</option>
+          <option value="VIEW_PATIENT_RECORD">View Patient Record</option>
+          <option value="BOOK_APPOINTMENT">Book Appointment</option>
+          <option value="OPD_CALL">OPD Queue Call</option>
+          <option value="LAB_ORDER">Lab Test Order</option>
+          <option value="DISCHARGE_SUMMARY_CREATE">Discharge Summary</option>
+          <option value="CONSENT_GRANT">Consent Grant</option>
+          <option value="CONSENT_REVOKE">Consent Revoke</option>
+        </select>
+      </div>
+
+      <!-- Audit Log Table -->
+      <div style="overflow-x: auto; max-height:560px; overflow-y:auto;">
+        <table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+          <thead style="position:sticky; top:0; background:#f1f5f9; z-index:2;">
+            <tr style="text-align:left; font-size:0.8rem; color:var(--primary-navy); text-transform:uppercase;">
+              <th style="padding:10px 12px;">Timestamp (IST)</th>
+              <th style="padding:10px 12px;">User / Identity</th>
+              <th style="padding:10px 12px;">Role</th>
+              <th style="padding:10px 12px;">Action</th>
+              <th style="padding:10px 12px;">Resource / Details</th>
+              <th style="padding:10px 12px;">Status</th>
+              <th style="padding:10px 12px;">IP Address</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table-tbody">
+            <tr>
+              <td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">
+                Loading audit ledger records...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 5: SCHEMES & ADVISORIES ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-schemes" style="display:none;">
+    <div class="vital-card" style="padding: 24px; margin-bottom:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color);">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>🏛️</span> National Health Schemes Directory
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Publish and manage central and state welfare health schemes displayed on citizen portals.
+          </p>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('modal-add-scheme').classList.add('open');" style="display:flex; align-items:center; gap:6px;">
+          <span>➕</span> Add Health Scheme
+        </button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+          <thead>
+            <tr style="background:#f1f5f9; text-align:left; font-size:0.8rem; color:var(--primary-navy); text-transform:uppercase;">
+              <th style="padding:10px 12px;">Scheme Name</th>
+              <th style="padding:10px 12px;">Nodal Agency</th>
+              <th style="padding:10px 12px;">Eligibility</th>
+              <th style="padding:10px 12px;">Status</th>
+              <th style="padding:10px 12px; text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="schemes-table-tbody">
+            <!-- Populated via API / SSR -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="vital-card" style="padding: 24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--border-color);">
+        <div>
+          <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+            <span>📢</span> Public Health Alerts & Seasonal Advisories
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+            Broadcast real-time epidemic advisories and health alerts to citizens and OPD screens.
+          </p>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('modal-add-advisory').classList.add('open');" style="display:flex; align-items:center; gap:6px;">
+          <span>➕</span> Publish New Advisory
+        </button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+          <thead>
+            <tr style="background:#f1f5f9; text-align:left; font-size:0.8rem; color:var(--primary-navy); text-transform:uppercase;">
+              <th style="padding:10px 12px;">Title</th>
+              <th style="padding:10px 12px;">Severity</th>
+              <th style="padding:10px 12px;">Message</th>
+              <th style="padding:10px 12px;">Action Advice</th>
+              <th style="padding:10px 12px;">Status</th>
+              <th style="padding:10px 12px; text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="advisories-table-tbody">
+            <!-- Populated via API / SSR -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 6: SETTINGS ==================== -->
+  <div class="admin-tab-pane" id="pane-admin-settings" style="display:none;">
+    <div class="vital-card" style="padding: 24px;">
+      <h3 style="font-size:1.25rem; color:var(--primary-navy); font-weight:700; margin-bottom: 6px; display:flex; align-items:center; gap:8px;">
+        <span>⚙️</span> Hospital Administration & System Configuration
+      </h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 20px;">
+        Configure national health portal parameters, emergency bed quotas, and automated doctor duty rules.
+      </p>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
+          <h4 style="font-size:1rem; color:var(--primary-navy); font-weight:700; margin-bottom:12px;">🏥 Hospital Operational Settings</h4>
+          
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="font-size:0.82rem;">Default Daily OPD Token Capacity per Doctor</label>
+            <input type="number" class="form-control" value="35" style="font-size:0.88rem;">
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="font-size:0.82rem;">Emergency Bed Allocation Threshold (%)</label>
+            <input type="number" class="form-control" value="15" style="font-size:0.88rem;">
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="font-size:0.82rem;">Automated Doctor Duty Timeout (Hours)</label>
+            <input type="number" class="form-control" value="8" style="font-size:0.88rem;">
+          </div>
+
+          <button type="button" class="btn btn-primary" style="font-size:0.85rem; font-weight:700;" onclick="alert('Operational settings saved successfully.');">
+            ✓ Save Operational Settings
+          </button>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
+          <h4 style="font-size:1rem; color:var(--primary-navy); font-weight:700; margin-bottom:12px;">🔒 Security & Governance</h4>
+          
+          <div style="margin-bottom:14px; font-size:0.85rem; color:#334155; line-height:1.6;">
+            <div>• <strong>Aadhaar / ABHA Verification:</strong> Mandatory for e-Hospital sync</div>
+            <div>• <strong>Role-Based Access:</strong> Admin authority level 4</div>
+            <div>• <strong>Database Backup:</strong> Real-time replicated cloud mirror</div>
+            <div>• <strong>Audit Logs:</strong> Immutable consultation timestamp ledger</div>
+          </div>
+
+          <button type="button" class="btn btn-outline" style="font-size:0.85rem; font-weight:700; color:var(--primary-navy); border-color:#cbd5e1;" onclick="alert('Audit ledger verified with zero integrity discrepancies.');">
+            📜 Run Security & Audit Check
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- ==================== MODAL: ADD NEW DOCTOR ==================== -->
+<div class="modal-backdrop" id="modal-add-doctor">
+  <div class="modal-card" style="max-width: 650px; max-height:88vh; overflow-y:auto;">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span>👨‍⚕️</span> Add New Doctor to Roster</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-add-doctor').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-add-doctor" onsubmit="event.preventDefault();">
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Doctor Full Name *</label>
+            <input type="text" id="add-doc-name" class="form-control" placeholder="Dr. Firstname Lastname" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Doctor ID / Reg No.</label>
+            <input type="text" id="add-doc-reg" class="form-control" placeholder="e.g. DOC-AIIMS-1090 (Auto if blank)">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            <input type="tel" id="add-doc-phone" class="form-control" placeholder="10-digit Phone" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="add-doc-email" class="form-control" placeholder="doctor@hospital.gov.in">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Login Password *</label>
+            <input type="password" id="add-doc-password" class="form-control" placeholder="Set temporary password" value="Doctor@123" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Roster Status</label>
+            <select id="add-doc-status" class="form-select">
+              <option value="ACTIVE" selected>Active & On Duty</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="ON_LEAVE">On Leave</option>
+              <option value="SUSPENDED">Suspended</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Doctor Type / Department *</label>
+            <select id="add-doc-dept" class="form-select" required>
+              <option value="General Medicine">General Medicine & Family Health</option>
+              <option value="Cardiology">Cardiology & Heart Care</option>
+              <option value="Pulmonology">Pulmonology (Respiratory/O2)</option>
+              <option value="Endocrinology">Endocrinology & Diabetes</option>
+              <option value="Nephrology">Nephrology & Renal Medicine</option>
+              <option value="Pediatrics">Pediatrics & Child Health</option>
+              <option value="Orthopedics">Orthopedics & Joint Care</option>
+              <option value="Gynecology">Obstetrics & Gynecology</option>
+              <option value="Dermatology">Dermatology</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hospital Facility *</label>
+            <select id="add-doc-hospital" class="form-select" required>
+              {% for h in all_hospitals %}
+              <option value="{{ h.id }}">{{ h.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Room / OPD Chamber</label>
+            <input type="text" id="add-doc-room" class="form-control" value="Room 102" placeholder="e.g. Room 204">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Slot Duration (Mins)</label>
+            <input type="number" id="add-doc-duration" class="form-control" value="15">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">OPD Start Time</label>
+            <input type="time" id="add-doc-start-time" class="form-control" value="09:00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">OPD End Time</label>
+            <input type="time" id="add-doc-end-time" class="form-control" value="17:00">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Qualification</label>
+            <input type="text" id="add-doc-qual" class="form-control" value="MBBS, MD">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Designation</label>
+            <input type="text" id="add-doc-desig" class="form-control" value="Senior Medical Officer">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Experience (Years)</label>
+            <input type="number" id="add-doc-exp" class="form-control" value="12">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Daily Patient Slots Capacity</label>
+            <input type="number" id="add-doc-slots" class="form-control" value="35">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Available Days</label>
+          <input type="text" id="add-doc-days" class="form-control" value="Mon, Tue, Wed, Thu, Fri, Sat">
+        </div>
+
+        <button type="submit" id="btn-submit-add-doctor" class="btn btn-primary" style="width:100%; padding:12px; font-weight:700;">
+          ✓ Save & Add Doctor to Hospital Roster
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: ADD HEALTH SCHEME ==================== -->
+<div class="modal-backdrop" id="modal-add-scheme">
+  <div class="modal-card" style="max-width:560px;">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span>🏛️</span> Add National Health Scheme</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-add-scheme').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-add-scheme" onsubmit="event.preventDefault(); submitAdminAddScheme();">
+        <div class="form-group">
+          <label class="form-label">Scheme Name *</label>
+          <input type="text" id="scheme-name" class="form-control" placeholder="e.g. Ayushman Bharat (PM-JAY)" required>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Code *</label>
+            <input type="text" id="scheme-code" class="form-control" placeholder="PMJAY" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nodal Agency</label>
+            <input type="text" id="scheme-agency" class="form-control" value="National Health Authority (NHA)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          <textarea id="scheme-desc" class="form-control" rows="2" placeholder="Summary of scheme..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Eligibility Criteria</label>
+          <input type="text" id="scheme-eligibility" class="form-control" placeholder="e.g. Low income families as per SECC database">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Coverage & Benefits</label>
+          <input type="text" id="scheme-benefits" class="form-control" placeholder="e.g. ₹5 Lakhs per family per year">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Official Portal URL</label>
+          <input type="url" id="scheme-url" class="form-control" placeholder="https://pmjay.gov.in">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; font-weight:700;">
+          ✓ Publish Health Scheme
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: ADD ADVISORY ==================== -->
+<div class="modal-backdrop" id="modal-add-advisory">
+  <div class="modal-card" style="max-width:540px;">
+    <div class="modal-header">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span>📢</span> Publish Public Health Advisory</h3>
+      <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-add-advisory').classList.remove('open');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-add-advisory" onsubmit="event.preventDefault(); submitAdminAddAdvisory();">
+        <div class="form-group">
+          <label class="form-label">Advisory Title *</label>
+          <input type="text" id="adv-title" class="form-control" placeholder="e.g. Seasonal Dengue & Malaria Alert" required>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Severity Level</label>
+            <select id="adv-severity" class="form-select">
+              <option value="INFO">Information (Blue)</option>
+              <option value="WARNING" selected>Warning (Orange)</option>
+              <option value="URGENT">Urgent Alert (Red)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target State / All</label>
+            <input type="text" id="adv-state" class="form-control" value="All India" placeholder="All India or Specific State">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Advisory Message *</label>
+          <textarea id="adv-message" class="form-control" rows="3" placeholder="Detailed alert description..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Action Advice for Citizens</label>
+          <input type="text" id="adv-advice" class="form-control" placeholder="e.g. Avoid water stagnation and use mosquito nets">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; font-weight:700;">
+          📢 Broadcast Advisory
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- ==================== MODAL: REGISTER HOSPITAL ==================== -->
+<div id="modal-add-hospital" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#fff; width:90%; max-width:540px; padding:24px; border-radius:var(--radius-lg); box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0; color:var(--primary-navy);">Register Hospital Facility</h3>
+    <form id="form-add-hosp" onsubmit="submitAdminAddHospital(event)">
+      <div class="form-group">
+        <label>Hospital Name *</label>
+        <input type="text" id="hosp-name" class="form-control" required placeholder="Safdarjung Hospital & Medical College">
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="form-group" style="flex:1;">
+          <label>Hospital Type</label>
+          <select id="hosp-type" class="form-control">
+            <option value="Central Govt">Central Government</option>
+            <option value="District Hospital">District General Hospital</option>
+            <option value="Private Hospital">Private Multispecialty</option>
+            <option value="Apex Institute">Apex Super-Specialty</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>License #</label>
+          <input type="text" id="hosp-license" class="form-control" placeholder="MOHFW-2026-987">
+        </div>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="form-group" style="flex:1;">
+          <label>City *</label>
+          <input type="text" id="hosp-city" class="form-control" required value="New Delhi">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label>State *</label>
+          <input type="text" id="hosp-state" class="form-control" required value="Delhi">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Hospital Admin Phone (Assign User)</label>
+        <input type="text" id="hosp-admin-phone" class="form-control" placeholder="9811111111">
+      </div>
+      <div style="text-align:right; margin-top:20px;">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-add-hospital').style.display='none';">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="background:#0b2545;">Register Facility</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.DEPT_STATS_DATA = {{ dept_stats_json|safe }};
+  window.ADMIN_TIME_SERIES_DATA = {{ time_series_json|safe }};
+
+  function verifyDoctor(doctorId, action) {
+    fetch('/api/admin/doctors/verify/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ doctor_id: doctorId, action: action })
+    }).then(res => res.json()).then(data => {
+      alert(data.message);
+      location.reload();
+    });
+  }
+
+  function toggleHospitalStatus(hospitalId, newStatus) {
+    fetch(`/api/admin/hospitals/${hospitalId}/update/`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ status: newStatus })
+    }).then(res => res.json()).then(data => {
+      alert(data.message);
+      location.reload();
+    });
+  }
+
+  function submitAdminAddHospital(e) {
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById('hosp-name').value,
+      facility_type: document.getElementById('hosp-type').value,
+      license_number: document.getElementById('hosp-license').value,
+      city: document.getElementById('hosp-city').value,
+      state: document.getElementById('hosp-state').value,
+      admin_phone: document.getElementById('hosp-admin-phone').value
+    };
+    fetch('/api/admin/hospitals/add/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).then(res => res.json()).then(data => {
+      alert(data.message);
+      document.getElementById('modal-add-hospital').style.display = 'none';
+      location.reload();
+    });
+  }
+</script>
+<script src="/static/js/admin_portal.js"></script>
+{% endblock %}

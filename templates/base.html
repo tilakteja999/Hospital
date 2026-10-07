@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Swasthya Setu | Multilingual AI Hospital Assistant{% endblock %}</title>
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for interactive vitals telemetry -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Leaflet CSS & JS for Interactive Hospital Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+  <!-- PWA Manifest & Meta -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#0284c7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Swasthya Setu">
+  
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- ==================== DUAL-TIER GOVERNMENT HEADER ==================== -->
+  <header class="header-container">
+    <!-- BAR 1: Emblem + Government of India Title + Profile/Auth -->
+    <div class="top-bar-1">
+      <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'role_portal' %}{% endif %}" class="brand-left">
+        <img src="/static/images/emblem.svg" alt="National Emblem of India" class="emblem-img">
+        <div class="brand-text">
+          <h1><span data-i18n="brand_title">Swasthya Setu</span> <span class="brand-badge">Voice-First AI</span></h1>
+          <div class="sub-text" data-i18n="brand_sub">Ministry of Health and Family Welfare • स्वास्थ्य एवं परिवार कल्याण मंत्रालय</div>
+        </div>
+      </a>
+
+      <div class="bar1-right">
+        <!-- Easy Voice Mode Header Shortcut -->
+        <button type="button" class="btn btn-sm btn-easy-voice-toggle" id="header-easy-voice-btn" title="Open Accessible Easy Voice Mode" aria-label="Open Easy Voice Mode" style="background: linear-gradient(135deg, #ff9933 0%, #e65100 100%); color:#ffffff; font-weight:800; font-size:0.82rem; border-radius:20px; padding:6px 14px; border:none; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(255,153,51,0.4);">
+          <span>🎙️</span> <span data-i18n="btn_easy_voice_mode">Easy Voice Mode</span>
+        </button>
+
+        <!-- Language Switcher -->
+        <div class="lang-selector">
+          <select id="top-lang-select" aria-label="Select Language">
+            <option value="en-IN">English (EN)</option>
+            <option value="hi-IN" selected>हिन्दी (Hindi)</option>
+            <option value="te-IN">తెలుగు (Telugu)</option>
+            <option value="ta-IN">தமிழ் (Tamil)</option>
+            <option value="bn-IN">বাংলা (Bengali)</option>
+            <option value="mr-IN">मराठी (Marathi)</option>
+            <option value="kn-IN">ಕನ್ನಡ (Kannada)</option>
+            <option value="ml-IN">മലയാളം (Malayalam)</option>
+            <option value="gu-IN">ગુજરાતી (Gujarati)</option>
+          </select>
+        </div>
+
+        {% if user.is_authenticated %}
+        <!-- Role-specific Portal Badge / Link -->
+        {% if user.role == 'ADMIN' %}
+        <a href="{% url 'admin_portal' %}" class="btn btn-sm" style="background:#ff9933; color:#ffffff; font-weight:700; font-size:0.8rem; border-radius:20px; padding:4px 12px;">
+          🏛️ Admin Portal
+        </a>
+        {% elif user.role == 'DOCTOR' %}
+        <a href="{% url 'doctor_portal' %}" class="btn btn-sm" style="background:#00a86b; color:#ffffff; font-weight:700; font-size:0.8rem; border-radius:20px; padding:4px 12px;">
+          👨‍⚕️ Doctor Portal
+        </a>
+        {% endif %}
+
+        <!-- User Profile Pill -->
+        <a href="{% if user.role == 'PATIENT' %}#settings{% elif user.role == 'ADMIN' %}{% url 'admin_portal' %}{% else %}{% url 'doctor_portal' %}{% endif %}" class="user-profile-chip" onclick="if(window.App && '{{ user.role }}' === 'PATIENT') App.switchTab('settings');">
+          <div class="user-avatar">
+            {{ user.get_display_name|slice:":1"|upper }}
+          </div>
+          <div class="user-info-text">
+            <span class="name">{{ user.get_display_name }}</span>
+            <span class="role-tag">{{ user.get_role_display }} {% if user.is_aadhaar_verified %}<span data-i18n="aadhaar_verified">✓ Aadhaar</span>{% endif %}</span>
+          </div>
+        </a>
+        <a href="{% url 'logout' %}" class="btn btn-sm btn-outline" style="color:#ffffff; border-color:rgba(255,255,255,0.4);" title="Sign out of Portal" data-i18n="logout">
+          Logout
+        </a>
+        {% else %}
+        <a href="{% url 'role_portal' %}" class="btn btn-sm btn-saffron" data-i18n="portal_login">
+          Portal Login
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if user.is_authenticated and request.resolver_match.url_name != 'admin_portal' and request.resolver_match.url_name != 'doctor_portal' %}
+    <!-- BAR 2: Single-Row Functional Tabs Navigation (Citizen Dashboard) -->
+    <nav class="top-bar-2" aria-label="Main Navigation" style="display:flex; flex-wrap:nowrap; overflow-x:auto; white-space:nowrap; align-items:center; gap:4px; padding:6px 12px; scrollbar-width:thin;">
+      <button type="button" class="nav-tab-btn active" data-tab="home" id="nav-btn-home">
+        <span>📊</span> <span data-i18n="tab_home">Home</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="records" id="nav-btn-records">
+        <span>📋</span> <span data-i18n="tab_records">Records</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="bookings" id="nav-btn-bookings">
+        <span>📅</span> <span data-i18n="tab_bookings">Bookings</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="notifications" id="nav-btn-notifications">
+        <span>🔔</span> <span data-i18n="tab_notifications">Notifications</span>
+        {% if notifications %}<span class="tab-badge">{{ notifications.count }}</span>{% endif %}
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="prescriptions" id="nav-btn-prescriptions">
+        <span>💊</span> <span data-i18n="tab_prescription">Prescription</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="physio" id="nav-btn-physio">
+        <span>🧘</span> <span data-i18n="tab_physio">Physiotherapy Videos</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="radiology" id="nav-btn-radiology">
+        <span>🩻</span> <span data-i18n="tab_radiology">Radiology Reports</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="emergency" id="nav-btn-emergency" style="background:rgba(220,38,38,0.1);color:#dc2626;font-weight:800;border:1.5px solid rgba(220,38,38,0.3);">
+        <span>🚨</span> <span>Emergency SOS</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="about" id="nav-btn-about">
+        <span>ℹ️</span> <span data-i18n="tab_about">About Us</span>
+      </button>
+      <button type="button" class="nav-tab-btn" data-tab="settings" id="nav-btn-settings">
+        <span>⚙️</span> <span data-i18n="tab_settings">Settings</span>
+      </button>
+
+      <button type="button" class="btn btn-sm btn-emerald" onclick="document.getElementById('modal-ai-scanner').classList.add('open');" style="margin-left:auto; font-size:0.78rem; font-weight:800; border-radius:20px; padding:6px 14px; white-space:nowrap; flex-shrink:0; background:#059669; color:#ffffff; border:none; cursor:pointer;" title="Scan Medicine Tablet or Medical Report via Camera">
+        <span data-i18n="btn_ai_scanner">📸 AI Camera Scanner</span>
+      </button>
+    </nav>
+    {% endif %}
+  </header>
+
+  <!-- ==================== MESSAGES / FLASH NOTICES ==================== -->
+  {% if messages %}
+  <div style="max-width: 1400px; margin: 12px auto 0; padding: 0 20px;">
+    {% for message in messages %}
+    <div style="padding: 12px 18px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; display:flex; align-items:center; justify-content:space-between; {% if message.tags == 'error' %}background:#ffebee; color:#c62828; border:1px solid #ef9a9a;{% elif message.tags == 'success' %}background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7;{% else %}background:#eef4f8; color:#0b2545; border:1px solid #b0c4de;{% endif %}">
+      <span>{{ message }}</span>
+      <button type="button" onclick="this.parentElement.remove()" style="background:transparent; border:none; cursor:pointer; font-weight:700;">✕</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ==================== PAGE CONTENT BODY ==================== -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ==================== UNIVERSAL FLOATING VOICE AI CHATBOT ==================== -->
+  <button type="button" class="voice-ai-trigger-btn" id="voice-ai-trigger-btn" title="Click or Speak to Swasthya AI Assistant" aria-label="Start voice assistant">
+    <span class="mic-icon">🎙️</span>
+    <span class="mic-pulse-ring"></span>
+  </button>
+
+  <!-- ==================== MAIN VOICE AI MODAL INTERFACE ==================== -->
+  <div class="voice-bot-modal" id="voice-bot-modal">
+    <div class="voice-bot-header">
+      <div style="display:flex; align-items:center; gap: 10px;">
+        <span style="font-size:1.4rem;">🧠</span>
+        <div>
+          <div style="font-weight:800; font-size: 1rem; letter-spacing:-0.2px;" data-i18n="voice_bot_title">Swasthya AI Assistant</div>
+          <div style="font-size:0.72rem; color:#8da9c4;" data-i18n="voice_bot_sub">Multilingual Voice-First Hospital Companion</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" id="voice-easy-mode-toggle" class="btn btn-xs" style="background:rgba(255,153,51,0.2); color:#ff9933; border:1px solid rgba(255,153,51,0.4); font-size:0.7rem; font-weight:700; border-radius:12px; padding:3px 8px;" title="Switch to Accessible Easy Voice Mode">
+          <span data-i18n="btn_easy_voice_mode">🎙️ Easy Mode</span>
+        </button>
+        <button type="button" id="voice-modal-close" style="background:transparent; border:none; color:#ffffff; font-size:1.2rem; cursor:pointer;" aria-label="Close Voice Assistant">✕</button>
+      </div>
+    </div>
+
+    <!-- Live Status State Bar -->
+    <div class="voice-state-bar" id="voice-state-bar">
+      <span class="voice-state-indicator" id="voice-state-indicator">
+        <span class="state-dot"></span>
+        <span class="state-text" id="voice-state-text">Ready to listen</span>
+      </span>
+      <span class="voice-lang-pill" id="voice-current-lang-pill">English • हिन्दी • తెలుగు</span>
+    </div>
+
+    <!-- Dynamic Audio Wave Visualizer Animation -->
+    <div class="voice-wave-container" id="voice-wave-container">
+      <div class="wave-bar bar-1"></div>
+      <div class="wave-bar bar-2"></div>
+      <div class="wave-bar bar-3"></div>
+      <div class="wave-bar bar-4"></div>
+      <div class="wave-bar bar-5"></div>
+      <div class="wave-bar bar-6"></div>
+      <div class="wave-bar bar-7"></div>
+      <div class="wave-bar bar-8"></div>
+    </div>
+
+    <!-- Clinical Safety Disclaimer Banner -->
+    <div class="voice-safety-disclaimer" id="voice-safety-disclaimer">
+      <span>🛡️ <span data-i18n="ai_safety_indicator">AI Hospital & Health Information</span></span>
+      <span style="font-size:0.68rem; opacity:0.85;" data-i18n="ai_safety_sub">Safe Educational Guidance • Not a Diagnosis</span>
+    </div>
+
+    <div class="voice-bot-body" id="voice-bot-body">
+      <div class="voice-msg-bubble ai">
+        <strong>"How can I help you?"</strong>
+        <br><br>
+        You can speak naturally in <strong>English, हिन्दी, తెలుగు, தமிழ், ಕನ್ನಡ, മലയാളം, मराठी, বাংলা, ગુજરાતી</strong>:
+        <ul style="margin: 6px 0 0 16px; font-size: 0.82rem; line-height: 1.45;">
+          <li><em>"Book an appointment with heart doctor"</em></li>
+          <li><em>"मेरी रिपोर्ट दिखाओ" (Show my reports)</em></li>
+          <li><em>"నా అపాయింట్‌మెంట్స్ ఓపెన్ చేయి" (Open my appointments)</em></li>
+          <li><em>"What medicines do I have today?"</em></li>
+          <li><em>"Show my OPD token number"</em></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Hero Tap to Speak Centerpiece -->
+    <div class="voice-hero-mic-box" id="voice-hero-mic-box">
+      <button type="button" class="voice-hero-mic-btn" id="voice-hero-mic-btn" aria-label="Tap to speak with AI assistant">
+        <span class="hero-mic-icon">🎙️</span>
+        <span class="hero-mic-label" id="hero-mic-label" data-i18n="easy_speak">Tap to Speak</span>
+      </button>
+    </div>
+
+    <!-- Audio Player & Action Controls Toolbar -->
+    <div class="voice-action-toolbar" id="voice-action-toolbar">
+      <button type="button" class="voice-action-btn stop" id="voice-toolbar-stop" title="Stop Assistant Speaking">
+        ⏹️ <span data-i18n="btn_cancel">Stop</span>
+      </button>
+      <button type="button" class="voice-action-btn repeat" id="voice-toolbar-repeat" title="Repeat Last Spoken Response">
+        🔊 <span data-i18n="btn_repeat">Repeat</span>
+      </button>
+      <button type="button" class="voice-action-btn reset" id="voice-toolbar-reset" title="Start New Conversation">
+        🔄 <span data-i18n="btn_reset">Reset</span>
+      </button>
+      <button type="button" class="voice-action-btn doctor" id="voice-toolbar-doctor" title="Book Doctor Consultation">
+        👨‍⚕️ <span data-i18n="btn_doctor">Doctor</span>
+      </button>
+      <button type="button" class="voice-action-btn emergency" id="voice-toolbar-emergency" title="Urgent Emergency 108">
+        🚨 <span data-i18n="btn_emergency">Emergency (108)</span>
+      </button>
+    </div>
+
+    <!-- Quick Voice Query Chips -->
+    <div class="quick-voice-chips">
+      <button type="button" class="quick-chip-btn" data-query="Book appointment" data-i18n="voice_chip_book">📅 Book Doctor</button>
+      <button type="button" class="quick-chip-btn" data-query="Show my reports" data-i18n="voice_chip_explain">🧪 My Reports</button>
+      <button type="button" class="quick-chip-btn" data-query="Show my medicines" data-i18n="voice_chip_rx">💊 Prescriptions</button>
+      <button type="button" class="quick-chip-btn" data-query="Show OPD token" data-i18n="voice_chip_records">🎫 OPD Token</button>
+      <button type="button" class="quick-chip-btn" data-query="Show my blood pressure" data-i18n="voice_chip_vitals">🩺 Blood Pressure</button>
+      <button type="button" class="quick-chip-btn" data-query="Why is Dolo 650 used?" data-i18n="chip_med_ask">💡 Why is Dolo 650 used?</button>
+    </div>
+
+    <!-- Dual Modality Fallback Footer -->
+    <div class="voice-bot-footer">
+      <select id="voice-lang-select" style="padding: 6px; font-size:0.75rem; border-radius:6px; border:1px solid #ccc; max-width:95px;" aria-label="Spoken Language">
+        <option value="en-IN">English</option>
+        <option value="hi-IN" selected>हिन्दी</option>
+        <option value="te-IN">తెలుగు</option>
+        <option value="ta-IN">தமிழ்</option>
+        <option value="bn-IN">বাংলা</option>
+        <option value="mr-IN">मराठी</option>
+        <option value="kn-IN">ಕನ್ನಡ</option>
+        <option value="ml-IN">മലയാളം</option>
+        <option value="gu-IN">ગુજરાતી</option>
+      </select>
+      <input type="text" id="voice-text-input" placeholder="Type or tap mic above..." data-i18n-placeholder="voice_input_placeholder" style="flex:1; padding:8px 14px; border-radius:20px; border:1px solid #cbd5e1; font-size:0.85rem; outline:none;">
+      <button type="button" id="voice-mic-inline" class="voice-mic-inline-btn" title="Speak Now" aria-label="Speak">🎤</button>
+      <button type="button" id="voice-send-btn" class="btn btn-sm btn-primary" style="border-radius:20px; padding:6px 14px;" aria-label="Send">➤</button>
+    </div>
+  </div>
+
+
+  <!-- ==================== ACCESSIBILITY EASY VOICE MODE OVERLAY ==================== -->
+  <div class="easy-voice-overlay" id="easy-voice-overlay" role="dialog" aria-modal="true" aria-label="Easy Voice Mode">
+    <div class="easy-voice-container">
+      
+      <!-- Top Bar with Exit -->
+      <div class="easy-voice-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:2rem;">🧠</span>
+          <div>
+            <h2 style="margin:0; font-size:1.5rem; font-weight:800; color:#ffffff;" data-i18n="easy_voice_mode_title">Easy Voice Mode</h2>
+            <div style="font-size:0.9rem; color:#94a3b8;" data-i18n="voice_bot_sub">आसान आवाज़ मोड • Speak Naturally</div>
+          </div>
+        </div>
+        <button type="button" id="easy-voice-exit-btn" class="easy-voice-close-btn" aria-label="Close Easy Voice Mode" data-i18n="btn_close_modal">
+          ✕ Exit Easy Mode
+        </button>
+      </div>
+
+      <!-- Spoken Assistant Feedback Display Card -->
+      <div class="easy-voice-speech-card" id="easy-voice-speech-card">
+        <div class="easy-speech-icon" id="easy-speech-icon">🔊</div>
+        <div class="easy-speech-text" id="easy-speech-text">
+          "How can I help you today? Tap SPEAK and tell me what you need."
+        </div>
+      </div>
+
+      <!-- Quick Yes / No Confirmation Controls (For Easy Mode) -->
+      <div class="easy-voice-confirm-bar" id="easy-voice-confirm-bar" style="display:none;">
+        <button type="button" class="easy-confirm-btn yes" id="easy-confirm-yes">
+          <span style="font-size:1.6rem;">✅</span> <span data-i18n="btn_confirm_proceed">YES / हां / అవును</span>
+        </button>
+        <button type="button" class="easy-confirm-btn no" id="easy-confirm-no">
+          <span style="font-size:1.6rem;">❌</span> <span data-i18n="btn_cancel">NO / नहीं / వద్దు</span>
+        </button>
+      </div>
+
+      <!-- Giant Central Microphone Button -->
+      <div class="easy-voice-mic-container">
+        <button type="button" class="easy-giant-mic-btn" id="easy-giant-mic-btn" aria-label="Start Speaking">
+          <div class="giant-mic-wave-ring"></div>
+          <div class="giant-mic-icon">🎙️</div>
+          <div class="giant-mic-text" id="easy-mic-status-text" data-i18n="easy_speak">SPEAK</div>
+        </button>
+      </div>
+
+      <!-- Large Accessible Touch Targets Grid -->
+      <div class="easy-voice-grid">
+        <button type="button" class="easy-grid-btn" data-action="home" id="easy-btn-home">
+          <span class="grid-icon">🏠</span>
+          <span class="grid-label" data-i18n="easy_home">HOME</span>
+        </button>
+        <button type="button" class="easy-grid-btn" data-action="appointment" id="easy-btn-appointment">
+          <span class="grid-icon">📅</span>
+          <span class="grid-label" data-i18n="easy_appointment">APPOINTMENT</span>
+        </button>
+        <button type="button" class="easy-grid-btn" data-action="medicines" id="easy-btn-medicines">
+          <span class="grid-icon">💊</span>
+          <span class="grid-label" data-i18n="easy_medicines">MEDICINES</span>
+        </button>
+        <button type="button" class="easy-grid-btn" data-action="reports" id="easy-btn-reports">
+          <span class="grid-icon">🧪</span>
+          <span class="grid-label" data-i18n="easy_reports">REPORTS</span>
+        </button>
+        <button type="button" class="easy-grid-btn" data-action="doctor" id="easy-btn-doctor">
+          <span class="grid-icon">👨‍⚕️</span>
+          <span class="grid-label" data-i18n="easy_doctor">DOCTOR</span>
+        </button>
+        <button type="button" class="easy-grid-btn" data-action="notifications" id="easy-btn-notifications">
+          <span class="grid-icon">🔔</span>
+          <span class="grid-label" data-i18n="easy_notifications">NOTIFICATIONS</span>
+        </button>
+        <button type="button" class="easy-grid-btn emergency-btn" data-action="emergency" id="easy-btn-emergency" style="grid-column: span 2;">
+          <span class="grid-icon">🚨</span>
+          <span class="grid-label" data-i18n="easy_emergency">EMERGENCY (108)</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ==================== CONSEQUENTIAL ACTION CONFIRMATION MODAL ==================== -->
+  <div class="modal-backdrop" id="modal-ai-action-confirm">
+    <div class="modal-card" style="max-width:520px; border-top: 5px solid #ff9933;">
+      <div class="modal-header">
+        <h3 id="ai-confirm-title" data-i18n="confirm_action_title">⚠️ Confirm Consequential Action</h3>
+        <button type="button" class="modal-close-btn" onclick="document.getElementById('modal-ai-action-confirm').classList.remove('open');">&times;</button>
+      </div>
+      <div class="modal-body" id="ai-confirm-body" style="font-size:0.95rem; line-height:1.6;">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn btn-outline btn-sm" id="ai-confirm-cancel-btn" data-i18n="btn_cancel">
+          Cancel / नहीं
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" id="ai-confirm-proceed-btn" style="background:#00a86b; border:none; font-weight:700;" data-i18n="btn_confirm_proceed">
+          Confirm & Execute / पुष्टि करें
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Common Modals Container -->
+  {% block modals %}{% endblock %}
+
+  <!-- Configure Server Language -->
+  <script>
+    window.SERVER_LANG = "{{ request.user.preferred_language|default:'en-IN' }}";
+  </script>
+  <!-- Core Scripts -->
+  <script src="/static/js/translations.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/charts.js"></script>
+  <script src="/static/js/voice_ai.js"></script>
+  <script src="/static/js/aadhaar_auth.js"></script>
+  <script src="/static/js/hospital_maps_booking.js"></script>
+  <script src="/static/js/emergency.js"></script>
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js').then(reg => {
+          console.log('SW registered:', reg.scope);
+        }).catch(err => console.warn('SW registration failed:', err));
+      });
+    }
+  </script>
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>

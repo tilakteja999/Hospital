@@ -1,0 +1,183 @@
+<!-- ==================== EMERGENCY TAB: SOS & AMBULANCE REQUEST ==================== -->
+<div class="tab-pane" id="tab-pane-emergency">
+
+  <!-- SOS HERO CARD -->
+  <div id="sos-hero-card" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); border-radius: 18px; padding: 28px 24px; margin-bottom: 24px; box-shadow: 0 12px 40px rgba(220,38,38,0.4); text-align:center; position:relative; overflow:hidden;">
+    <div style="position:absolute;top:-30px;right:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+    <div style="position:absolute;bottom:-40px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+    <div style="font-size:4rem;margin-bottom:12px;animation:pulse-sos 1.5s infinite;">🚨</div>
+    <h2 style="color:#fff;font-size:1.6rem;font-weight:900;margin:0 0 6px;">Emergency SOS</h2>
+    <p style="color:rgba(255,255,255,0.85);font-size:0.9rem;margin:0 0 20px;max-width:420px;margin-left:auto;margin-right:auto;">
+      Tap the button below to instantly alert the nearest government hospital and dispatch an ambulance to your location.
+    </p>
+
+    <!-- Emergency Type -->
+    <div style="margin-bottom:16px;display:flex;justify-content:center;">
+      <select id="sos-emergency-type" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:10px;padding:10px 16px;font-size:0.9rem;font-weight:700;width:100%;max-width:360px;backdrop-filter:blur(8px);">
+        <option value="Accident / Injury">🚗 Accident / Injury</option>
+        <option value="Chest pain">❤️ Chest Pain (Cardiac)</option>
+        <option value="Breathing difficulty">🫁 Breathing Difficulty</option>
+        <option value="Unconsciousness">😵 Unconsciousness / Collapse</option>
+        <option value="Stroke symptoms">🧠 Stroke Symptoms</option>
+        <option value="Severe bleeding">🩸 Severe Bleeding</option>
+        <option value="Pregnancy emergency">🤱 Pregnancy Emergency</option>
+        <option value="Poisoning / Overdose">⚗️ Poisoning / Overdose</option>
+        <option value="Burns">🔥 Burns / Fire Injury</option>
+        <option value="Other">🏥 Other Medical Emergency</option>
+      </select>
+    </div>
+
+    <!-- SOS Button -->
+    <button id="btn-sos-trigger" onclick="EmergencySOS.triggerSOS()" style="background:#fff;color:#dc2626;border:none;border-radius:50%;width:120px;height:120px;font-size:2.4rem;font-weight:900;cursor:pointer;box-shadow:0 0 0 0 rgba(255,255,255,0.5);animation:sos-ring 2s infinite;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;transition:transform 0.15s;">
+      <span>🆘</span>
+      <span style="font-size:0.7rem;font-weight:800;color:#991b1b;">SEND SOS</span>
+    </button>
+
+    <div style="margin-top:14px;color:rgba(255,255,255,0.7);font-size:0.78rem;">
+      ⚡ Location auto-detected · Nearest hospital alerted · Ambulance dispatched
+    </div>
+  </div>
+
+  <!-- SOS STATUS TRACKER (hidden until SOS sent) -->
+  <div id="sos-status-tracker" style="display:none;background:var(--card-bg);border-radius:14px;padding:20px;margin-bottom:24px;border:2px solid #dc2626;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="width:14px;height:14px;border-radius:50%;background:#dc2626;animation:blink-dot 1s infinite;"></div>
+      <h3 style="margin:0;font-size:1.1rem;font-weight:800;color:var(--text);">🚑 Emergency Active</h3>
+      <span id="sos-priority-badge" style="background:#dc2626;color:#fff;border-radius:20px;padding:3px 12px;font-size:0.75rem;font-weight:800;">CRITICAL</span>
+    </div>
+
+    <!-- Progress Steps -->
+    <div id="sos-progress-steps" style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:6px;">
+      <div class="sos-step active" data-status="RECEIVED">📥 Received</div>
+      <div class="sos-step" data-status="DISPATCHED">🚑 Dispatched</div>
+      <div class="sos-step" data-status="EN_ROUTE">🛣️ En Route</div>
+      <div class="sos-step" data-status="ON_SCENE">📍 On Scene</div>
+      <div class="sos-step" data-status="RESOLVED">✅ Resolved</div>
+    </div>
+
+    <div id="sos-details-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+      <div style="background:var(--bg);border-radius:10px;padding:12px;">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">SOS ID</div>
+        <div id="sos-detail-id" style="font-weight:800;font-size:1rem;color:var(--text);">—</div>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;padding:12px;">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">Type</div>
+        <div id="sos-detail-type" style="font-weight:800;font-size:0.9rem;color:var(--text);">—</div>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;padding:12px;">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">Hospital</div>
+        <div id="sos-detail-hospital" style="font-weight:800;font-size:0.9rem;color:var(--text);">—</div>
+      </div>
+      <div style="background:var(--bg);border-radius:10px;padding:12px;">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">Ambulance ETA</div>
+        <div id="sos-detail-eta" style="font-weight:800;font-size:1rem;color:#f59e0b;">—</div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button onclick="EmergencySOS.pollStatus()" style="background:var(--primary);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-weight:700;font-size:0.85rem;cursor:pointer;">🔄 Refresh Status</button>
+      <button onclick="EmergencySOS.cancelSOS()" style="background:transparent;color:#dc2626;border:1.5px solid #dc2626;border-radius:9px;padding:9px 18px;font-weight:700;font-size:0.85rem;cursor:pointer;">✕ Cancel Request</button>
+    </div>
+  </div>
+
+  <!-- EMERGENCY CONTACTS + TIPS -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px;">
+
+    <!-- National Helplines -->
+    <div style="background:var(--card-bg);border-radius:14px;padding:20px;border:1px solid var(--border);">
+      <h3 style="margin:0 0 14px;font-size:1rem;font-weight:800;color:var(--text);">📞 National Emergency Helplines</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="tel:112" class="helpline-card" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1e40af,#1d4ed8);color:#fff;padding:12px 14px;border-radius:10px;text-decoration:none;font-weight:800;">
+          <span style="font-size:1.6rem;">🆘</span>
+          <div><div style="font-size:1.2rem;font-weight:900;">112</div><div style="font-size:0.75rem;opacity:0.85;">National Emergency (Police + Fire + Ambulance)</div></div>
+        </a>
+        <a href="tel:108" class="helpline-card" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:12px 14px;border-radius:10px;text-decoration:none;font-weight:800;">
+          <span style="font-size:1.6rem;">🚑</span>
+          <div><div style="font-size:1.2rem;font-weight:900;">108</div><div style="font-size:0.75rem;opacity:0.85;">Ambulance / Medical Emergency (Free)</div></div>
+        </a>
+        <a href="tel:104" class="helpline-card" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#047857,#059669);color:#fff;padding:12px 14px;border-radius:10px;text-decoration:none;font-weight:800;">
+          <span style="font-size:1.6rem;">💊</span>
+          <div><div style="font-size:1.2rem;font-weight:900;">104</div><div style="font-size:0.75rem;opacity:0.85;">Medical Helpline (Telemedicine)</div></div>
+        </a>
+        <a href="tel:9152987821" class="helpline-card" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;padding:12px 14px;border-radius:10px;text-decoration:none;font-weight:800;">
+          <span style="font-size:1.6rem;">🧠</span>
+          <div><div style="font-size:1.2rem;font-weight:900;">iCall</div><div style="font-size:0.75rem;opacity:0.85;">Mental Health: 9152987821</div></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- First Aid Tips -->
+    <div style="background:var(--card-bg);border-radius:14px;padding:20px;border:1px solid var(--border);">
+      <h3 style="margin:0 0 14px;font-size:1rem;font-weight:800;color:var(--text);">🩺 Quick First Aid Tips</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:rgba(220,38,38,0.08);border-left:3px solid #dc2626;padding:10px 14px;border-radius:0 8px 8px 0;">
+          <div style="font-weight:800;font-size:0.85rem;color:var(--text);">❤️ Cardiac Arrest</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Tilt head, 30 chest compressions : 2 rescue breaths. Keep going until help arrives.</div>
+        </div>
+        <div style="background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;padding:10px 14px;border-radius:0 8px 8px 0;">
+          <div style="font-weight:800;font-size:0.85rem;color:var(--text);">🩸 Severe Bleeding</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Apply firm, direct pressure with a clean cloth. Elevate the injured limb. Do not remove the cloth.</div>
+        </div>
+        <div style="background:rgba(59,130,246,0.08);border-left:3px solid #3b82f6;padding:10px 14px;border-radius:0 8px 8px 0;">
+          <div style="font-weight:800;font-size:0.85rem;color:var(--text);">🧠 Stroke — F.A.S.T.</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;"><b>F</b>ace drooping · <b>A</b>rm weakness · <b>S</b>peech slurred · <b>T</b>ime to call 112 immediately.</div>
+        </div>
+        <div style="background:rgba(5,150,105,0.08);border-left:3px solid #059669;padding:10px 14px;border-radius:0 8px 8px 0;">
+          <div style="font-weight:800;font-size:0.85rem;color:var(--text);">🫁 Choking</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">Bend person forward, 5 firm back blows. Then 5 abdominal thrusts (Heimlich). Repeat.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK ON COMPLETED APPOINTMENTS -->
+  <div style="background:var(--card-bg);border-radius:14px;padding:20px;border:1px solid var(--border);">
+    <h3 style="margin:0 0 16px;font-size:1rem;font-weight:800;color:var(--text);">⭐ Rate Your Recent Appointments</h3>
+    <div id="feedback-appointment-list" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="color:var(--text-muted);font-size:0.88rem;text-align:center;padding:20px;">Loading completed appointments…</div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+@keyframes pulse-sos { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+@keyframes sos-ring { 0%{box-shadow:0 0 0 0 rgba(255,255,255,0.5)} 70%{box-shadow:0 0 0 20px rgba(255,255,255,0)} 100%{box-shadow:0 0 0 0 rgba(255,255,255,0)} }
+@keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.sos-step {
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+.sos-step.active {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}
+.sos-step.done {
+  background: #059669;
+  color: #fff;
+  border-color: #059669;
+}
+
+#btn-sos-trigger:hover { transform: scale(1.05); }
+#btn-sos-trigger:active { transform: scale(0.95); }
+
+.helpline-card { transition: transform 0.15s, box-shadow 0.15s; }
+.helpline-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+
+/* Feedback Stars */
+.star-rating { display:flex; gap:6px; }
+.star-rating input { display:none; }
+.star-rating label { font-size:1.6rem; cursor:pointer; color:#d1d5db; transition:color 0.15s; }
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label { color:#f59e0b; }
+</style>

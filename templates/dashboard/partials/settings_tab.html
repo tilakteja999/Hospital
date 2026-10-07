@@ -1,0 +1,237 @@
+<!-- ==================== SETTINGS & PROFILE TAB: PRIVACY, CONSENT & EMERGENCY PROFILE ==================== -->
+<div class="tab-pane" id="tab-pane-settings">
+  
+  <div class="section-header">
+    <div class="section-title">
+      <h2>⚙️ <span data-i18n="settings_title">Settings, Privacy Consent & Emergency Profile</span></h2>
+      <span class="subtitle" data-i18n="settings_sub">Manage digital health consent, emergency responder profile, Aadhaar ABHA account, and accessibility.</span>
+    </div>
+  </div>
+
+  <!-- 1. PATIENT CONSENT & MEDICAL RECORD PRIVACY SECTION -->
+  <div class="vital-card" style="padding: 22px; margin-bottom: 24px; border-top: 4px solid #0b3b60;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom: 16px;">
+      <div>
+        <h3 style="font-size:1.2rem; color:var(--primary-navy); font-weight:700; display:flex; align-items:center; gap:8px;">
+          <span>🔒</span> <span data-i18n="records_consent_heading">Patient Consent & Medical Record Privacy Control</span>
+        </h3>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-top:2px;">
+          You have complete ownership of your health records. Authorize or immediately revoke clinical access for consulting doctors and hospitals.
+        </p>
+      </div>
+    </div>
+
+    <!-- Pending Consent Requests from Doctors -->
+    {% if pending_consents %}
+    <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:10px; padding:16px; margin-bottom:16px;">
+      <h4 style="margin:0 0 10px 0; color:#b45309; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
+        <span>⏳</span> Pending Medical Record Access Requests ({{ pending_consents|length }})
+      </h4>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        {% for c in pending_consents %}
+        <div style="background:#fff; border:1px solid #fde68a; border-radius:8px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <strong style="color:#0f172a; font-size:0.95rem;">Dr. {{ c.doctor_name }}</strong> ({{ c.hospital_name }})
+            <div style="font-size:0.82rem; color:#475569;">Purpose: <em>{{ c.purpose }}</em> • Scope: Medical History, Labs, Prescriptions</div>
+            <div style="font-size:0.75rem; color:#94a3b8;">Requested on {{ c.requested_at|date:"d-M-Y H:i" }}</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn-sm btn-emerald" onclick="handleConsentAction({{ c.id }}, 'GRANT')">
+              ✓ Grant Access
+            </button>
+            <button type="button" class="btn btn-sm btn-outline" style="border-color:#e63946; color:#e63946;" onclick="handleConsentAction({{ c.id }}, 'DENY')">
+              ✕ Deny
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Active Doctor Consents -->
+    <h4 style="font-size:0.95rem; color:var(--primary-navy); margin:0 0 10px 0;">Active Doctor Authorizations</h4>
+    {% if active_consents %}
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:12px;">
+      {% for c in active_consents %}
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <strong style="color:#0f172a; font-size:0.95rem;">Dr. {{ c.doctor_name }}</strong>
+            <span style="background:#d1fae5; color:#065f46; font-size:0.7rem; padding:1px 6px; border-radius:4px; font-weight:700;">ACTIVE</span>
+          </div>
+          <div style="font-size:0.8rem; color:#64748b;">{{ c.hospital_name }} • {{ c.purpose }}</div>
+          <div style="font-size:0.75rem; color:#94a3b8;">Granted: {{ c.actioned_at|date:"d-M-Y" }}</div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline" style="border-color:#e63946; color:#e63946; font-size:0.78rem; white-space:nowrap;" onclick="handleConsentAction({{ c.id }}, 'REVOKE')">
+          🚫 Revoke Access
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="background:#f8fafc; border-radius:8px; padding:14px; color:#64748b; font-size:0.85rem;">
+      No external doctors currently have active authorization to access your medical records.
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap: 24px;">
+    
+    <!-- Left Column: Citizen Identity Card & Aadhaar Status -->
+    <div>
+      <!-- ABHA Health Card Mockup -->
+      <div style="background: linear-gradient(135deg, #0b2545 0%, #134074 100%); color:#ffffff; border-radius: 16px; padding: 22px; box-shadow: var(--shadow-md); position:relative; overflow:hidden; margin-bottom: 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <img src="/static/images/emblem.svg" alt="Emblem" style="width:30px; height:30px;">
+            <span style="font-size:0.75rem; font-weight:700; color:#ff9933; letter-spacing:0.5px;">NATIONAL HEALTH AUTHORITY</span>
+          </div>
+          <span style="font-size:0.7rem; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px;">ABHA ID</span>
+        </div>
+
+        <div style="display:flex; gap:16px; align-items:center; margin-bottom:14px;">
+          <div style="width:60px; height:60px; border-radius:50%; background:#ff9933; color:#0b2545; display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:800; border:2px solid #ffffff;">
+            {{ user.get_display_name|slice:":1"|upper }}
+          </div>
+          <div>
+            <div style="font-size:1.2rem; font-weight:700;">{{ user.get_display_name }}</div>
+            <div style="font-size:0.8rem; color:#8da9c4;">Phone: +91 {{ user.phone }}</div>
+            <div style="font-size:0.78rem; color:#dbe4ee;"><span data-i18n="blood_group_label">Blood Group</span>: <strong style="color:#ff9933;">{{ user.blood_group }}</strong> | <span data-i18n="age_label">Age</span>: {{ user.age }} yrs</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.25); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; font-size:0.82rem;">
+          <span>Aadhaar: <strong>{{ user.get_masked_aadhaar }}</strong></span>
+          <span style="color:#00a86b; font-weight:700;">{% if user.is_aadhaar_verified %}✓ UIDAI Verified{% else %}⚠️ Unverified{% endif %}</span>
+        </div>
+      </div>
+
+      <!-- Quick Aadhaar Linking Box if not verified -->
+      {% if not user.is_aadhaar_verified %}
+      <div class="vital-card" style="margin-bottom:20px; border-top:4px solid var(--accent-saffron);">
+        <h4 style="color:var(--primary-navy); margin-bottom:8px;">🔗 Link & Verify Aadhaar</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Link your 12-digit Aadhaar to enable instant sync of prescriptions and test reports across India.</p>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="aadhaar-number-input" class="form-control" placeholder="Enter 12-Digit Aadhaar">
+          <button type="button" id="btn-send-aadhaar-otp" class="btn btn-saffron btn-sm">Get OTP</button>
+        </div>
+        <div id="aadhaar-status-msg" style="display:none; font-size:0.8rem; margin-top:8px; padding:6px 10px; border-radius:6px;"></div>
+        <div id="aadhaar-otp-container" style="display:none; margin-top:10px;">
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="aadhaar-otp-input" class="form-control" placeholder="6-digit OTP">
+            <button type="button" id="btn-verify-aadhaar-otp" class="btn btn-emerald btn-sm">Verify</button>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Accessibility Settings Card -->
+      <div class="vital-card">
+        <h4 style="color:var(--primary-navy); margin-bottom:12px;">♿ Accessibility & Display</h4>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
+          <div>
+            <div style="font-weight:600; font-size:0.9rem;" data-i18n="high_contrast_label">High Contrast Mode</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Enhance text visibility and bold contrast</div>
+          </div>
+          <input type="checkbox" id="setting-contrast-toggle" style="transform:scale(1.3); cursor:pointer;">
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:600; font-size:0.9rem;" data-i18n="pref_lang_label">Preferred Language</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Voice & text translation preference</div>
+          </div>
+          <select id="setting-lang-select" class="form-select" style="width:auto; padding:4px 8px; font-size:0.85rem;">
+            <option value="en-IN">English</option>
+            <option value="hi-IN" selected>हिन्दी</option>
+            <option value="te-IN">తెలుగు</option>
+            <option value="ta-IN">தமிழ்</option>
+            <option value="bn-IN">বাংলা</option>
+            <option value="mr-IN">मराठी</option>
+            <option value="gu-IN">ગુજરાતી</option>
+            <option value="kn-IN">ಕನ್ನಡ</option>
+            <option value="ml-IN">മലയാളം</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Emergency Profile & Personal Information Form -->
+    <div class="vital-card" style="padding:24px; border-top:4px solid #e63946;">
+      <h3 style="font-size:1.15rem; color:#e63946; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+        <span>🚨</span> <span data-i18n="edit_profile_title">Configure Emergency Medical Profile</span>
+      </h3>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-top:-8px; margin-bottom:16px;">
+        This information is exposed ONLY during emergency lookup via your Emergency Card. Full EHR remains strictly protected.
+      </p>
+      
+      <form id="form-update-profile" onsubmit="event.preventDefault();">
+        <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:14px;">
+          <div class="form-group">
+            <label class="form-label" for="prof-name" data-i18n="name_label">Full Name</label>
+            <input type="text" id="prof-name" class="form-control" value="{{ user.get_display_name }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="prof-blood" data-i18n="blood_group_label">Blood Group</label>
+            <select id="prof-blood" class="form-select">
+              <option value="A+" {% if user.blood_group == 'A+' %}selected{% endif %}>A+</option>
+              <option value="A-" {% if user.blood_group == 'A-' %}selected{% endif %}>A-</option>
+              <option value="B+" {% if user.blood_group == 'B+' %}selected{% endif %}>B+</option>
+              <option value="B-" {% if user.blood_group == 'B-' %}selected{% endif %}>B-</option>
+              <option value="O+" {% if user.blood_group == 'O+' %}selected{% endif %}>O+</option>
+              <option value="O-" {% if user.blood_group == 'O-' %}selected{% endif %}>O-</option>
+              <option value="AB+" {% if user.blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+              <option value="AB-" {% if user.blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div class="form-group">
+            <label class="form-label" for="emg-contact-name" data-i18n="emergency_label">Emergency Contact Name</label>
+            <input type="text" id="emg-contact-name" class="form-control" value="{{ emergency_profile.contact_name }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="emg-contact-phone">Contact Phone Number</label>
+            <input type="text" id="emg-contact-phone" class="form-control" value="{{ emergency_profile.phone_number }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="emg-relationship">Relationship</label>
+          <input type="text" id="emg-relationship" class="form-control" value="{{ emergency_profile.relationship }}" placeholder="e.g. Brother / Spouse / Parent">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="emg-allergies" style="color:#e63946; font-weight:700;">Critical Allergies (Drug & Food)</label>
+          <textarea id="emg-allergies" class="form-control" rows="2" placeholder="e.g. Penicillin, Sulfa drugs, Peanuts">{{ emergency_profile.known_allergies }}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="emg-meds">Critical Current Medications</label>
+          <textarea id="emg-meds" class="form-control" rows="2" placeholder="e.g. Telmisartan 40mg (Morning), Metformin 500mg">{{ emergency_profile.important_current_meds }}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="emg-conditions">Major Medical Conditions</label>
+          <input type="text" id="emg-conditions" class="form-control" value="{{ emergency_profile.major_medical_conditions }}" placeholder="e.g. Type-2 Diabetes, Hypertension, Asthma">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="emg-hospital">Preferred Hospital</label>
+          <input type="text" id="emg-hospital" class="form-control" value="{{ emergency_profile.preferred_hospital }}" placeholder="e.g. AIIMS Hospital Trauma Center">
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="saveEmergencyAndProfile()" style="width:100%; padding:12px; margin-top:8px;" data-i18n="save_profile_btn">
+          💾 Save Emergency & Profile Settings
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+</div>
+
